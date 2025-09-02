@@ -1,0 +1,140 @@
+// TODO: break this up into smaller files per component
+
+@import 'vanilla-framework';
+@include vanilla;
+@include vf-base;
+@include vf-p-grid;
+// categories
+@include vf-p-tabs;
+// buttons
+@include vf-p-buttons;
+@include vf-p-icons-common;
+// context menu
+@include vf-p-contextual-menu;
+// filter and search
+@include vf-p-chip;
+@include vf-p-search-box;
+@include vf-p-search-and-filter;
+@include vf-u-off-screen;
+// lists
+@include vf-p-list-placeholders;
+@include vf-p-list;
+@include vf-p-list-divided;
+@include vf-p-list-item-state;
+@include vf-p-inline-list;
+@include vf-p-inline-list-middot;
+@include vf-p-inline-list-stretch;
+//navbar
+@include vf-p-navigation;
+//tables
+// @include vf-p-table-expanding;
+
+//nested list
+@include vf-p-list-tree;
+
+//additional icons
+@include vf-p-icon-topic;
+@include vf-p-icon-containers;
+
+
+
+body {
+  min-height: 100vh;
+}
+
+.allow-overflow {
+  overflow: visible;
+}
+
+
+.digest {
+  display: block;
+  width: 100%;
+}
+
+.digest>span {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-labels .label {
+  cursor: default;
+  background-color: #E6E4E2;
+  border-radius: 0.4em;
+  padding: 0.1em 0.3em;
+  margin: 0.1em;
+  line-height: 1.5em;
+  font-size: 0.7em;
+  float: left;
+  max-width: 100%;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+}
+
+.col-labels .label-button:hover {
+  filter: brightness(85%);
+  cursor: pointer;
+}
+
+.col-labels [data-value="amd64"],
+.col-labels [data-value="i386"] {
+  background-color: #F8CCBC;
+}
+
+.col-labels [data-value="arm64"],
+.col-labels [data-value="arm"] {
+  background-color: #D6BECB;
+}
+
+.col-labels [data-value="ppc64le"] {
+  background-color: #CABFC6;
+}
+
+.col-labels [data-value="High Priority"] {
+  background-color: #ffa17f;
+}
+
+.col-labels [data-value="Medium Priority"] {
+  background-color: #fecebd;
+}
+
+
+.sub-footer-db-stats {
+  color: #bbb;
+  font-style: italic;
+  font-size: small;
+}
+
+.empty-state-icon>i {
+  height: 80px;
+  width: 80px;
+}
+
+.promo-tab {
+  margin: 0;
+  position: fixed;
+  right: 10%;
+  bottom: 0;
+  cursor: pointer;
+  z-index: 1000;
+  transition: padding-bottom 0.3s ease;
+}
+
+.promo-tab:hover,
+.promo-tab.hover {
+  padding-bottom: 1em;
+}
+
+.promo-tab>span {
+  margin-right: 1em;
+}
+
+.status-icon {
+  margin-right: 0.5em;
+}
