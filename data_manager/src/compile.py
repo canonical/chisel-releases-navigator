@@ -7,6 +7,7 @@ import brotli
 import yaml
 from .sdf_checker import check_sdf
 
+
 def get_remote_branches(repo_path: Path) -> list:
     """
     Returns a list of remote branch names (without the 'origin/' prefix)
@@ -49,51 +50,7 @@ def checkout_branch(repo_path: Path, branch: str):
         )
 
 
-def print_changed_files_for_pr(repo_path: Path, pr_number: int):
-    """
-    Uses the GitHub CLI to get details for a PR (specifically, the changed files)
-    and prints the paths of all files changed in that PR.
-    """
-    result = subprocess.run(
-        ["gh", "pr", "view", str(pr_number), "--json", "files"],
-        cwd=str(repo_path),
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    pr_details = json.loads(result.stdout)
-    return pr_details
-
-
-def list_pull_requests(repo_path: Path) -> list:
-    """
-    Uses the GitHub CLI to list all pull requests in the repository.
-    Returns a list of dictionaries containing PR information (number and title).
-    """
-    result = subprocess.run(
-        ["gh", "pr", "list", "--state", "all", "--json", "number,title"],
-        cwd=str(repo_path),
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    prs = json.loads(result.stdout)
-    return prs
-
-
-def create_warning(warning: str, text: str = None, line: int = None):
-    warning = {"warning": warning}
-
-    if text is not None:
-        warning["text"] = text
-
-    if line is not None:
-        warning["line"] = line
-
-    return warning
-
-
-def compile_data(output: Path, data_path: Path):
+def compile_data(output: Path, data_path: Path) -> None:
     db, Slice, Meta = initialize_database(output)
     add_meta_data(db, Meta)
 
@@ -104,7 +61,7 @@ def compile_data(output: Path, data_path: Path):
     compress_database(output)
 
 
-def initialize_database(output: Path):
+def initialize_database(output: Path) -> tuple[SqliteDatabase, type, type]:
     db = SqliteDatabase(output)
 
     class BaseModel(Model):

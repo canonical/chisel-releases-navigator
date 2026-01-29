@@ -1,16 +1,17 @@
-def create_warning(warning: str, text: str = None, line: int = None):
-    """
-    Creates a warning dictionary with optional text and line information.
-    """
-    warning = {"warning": warning}
+def create_warning(
+    warning: str,
+    text: str | None = None,
+    line: int | None = None,
+) -> dict[str, str | int]:
+    warning_dict: dict[str, str | int] = {"warning": warning}
 
     if text is not None:
-        warning["text"] = text
+        warning_dict["text"] = text
 
     if line is not None:
-        warning["line"] = line
+        warning_dict["line"] = line
 
-    return warning
+    return warning_dict
 
 
 def check_missing_copyright(data_json):
@@ -31,7 +32,7 @@ def check_double_glob(data_json, sdf_text):
     if "**" in sdf_text:
         warnings.append(create_warning("double glob"))
 
-    for name, content in data_json["slices"].items():
+    for _name, content in data_json["slices"].items():
         contents_keys = list(content.get("contents", {}).keys())
         for path in contents_keys:
             if "**" in path:
@@ -87,7 +88,7 @@ def check_unsorted_contents(data_json):
     Checks if contents and essentials in the JSON data are unsorted.
     """
     warnings = []
-    for name, content in data_json["slices"].items():
+    for _name, content in data_json["slices"].items():
         contents_keys = list(content.get("contents", {}).keys())
         essentials = content.get("essential", [])
 
