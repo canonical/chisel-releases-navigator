@@ -3,25 +3,9 @@ from pathlib import Path
 from peewee import Model, SqliteDatabase, TextField
 from datetime import datetime
 import subprocess
+import brotli
 import yaml
 from .sdf_checker import check_sdf
-
-arch_sigs = [
-    "arm",
-    "amd64",
-    "x86",
-    "aarch",
-    "i386",
-    "riscv",
-    "ppc64",
-    "s390x",
-]
-
-
-def load_json(file_path: Path):
-    if file_path.exists():
-        return json.loads(file_path.read_text())
-
 
 def get_remote_branches(repo_path: Path) -> list:
     """
@@ -180,9 +164,6 @@ def process_slice(Slice, branch: str, sdf_path: Path):
 
 
 def compress_database(output: Path):
-    subprocess.run(
-        ["brotli", "-kf", str(output)],
-        cwd=str(output.parent),
-        text=True,
-        check=True,
-    )
+    compressed = brotli.compress(output.read_bytes())
+    compressed_path = Path(f"{output}.br")
+    compressed_path.write_bytes(compressed)

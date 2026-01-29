@@ -1,6 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
+import sys
 
 from .compile import compile_data
 from .fetch import init_repo
@@ -21,10 +22,16 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="cmd", help="subcommand help")
 
-    subparsers.add_parser("fetch", help="fetch help")
-    subparsers.add_parser("compile", help="compile help")
+    subparsers.add_parser(
+        "fetch", help="Fetch or update the chisel-releases repository"
+    )
+    subparsers.add_parser("compile", help="Compile the data into the database")
 
     args = parser.parse_args()
+
+    if not args.cmd:
+        parser.print_help()
+        return
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -35,6 +42,10 @@ def main():
     elif args.cmd == "compile":
         db_path.unlink(missing_ok=True)
         compile_data(db_path, data_dir)
+
+    else:
+        logging.error(f"Unknown command: {args.cmd}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

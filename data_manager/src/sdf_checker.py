@@ -56,8 +56,7 @@ def check_excess_blank_lines(sdf_text):
     return warnings
 
 
-# TODO: apply DRY. Source from static location.
-arch_sigs = [
+ARCH_SIGS = [
     "arm",
     "amd64",
     "x86",
@@ -77,7 +76,7 @@ def check_architecture_comments(sdf_text):
     for line in sdf_text.splitlines():
         if "#" in line:
             comments_content = line.split("#", 1)[1]
-            if any(arch in comments_content for arch in arch_sigs):
+            if any(arch in comments_content for arch in ARCH_SIGS):
                 warnings.append(create_warning("architecture comments"))
                 break
     return warnings
