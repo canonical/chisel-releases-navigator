@@ -12,8 +12,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy-dashboard:
-    name: build-and-deploy-dashboard
+  build:
+    name: build
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Dashboard Repository
@@ -33,7 +33,9 @@ jobs:
       - name: Build Dashboard
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make build-dist
+        run: |
+          [ -f dev-image.tar ] && touch dev-image.tar
+          make -d build-dist
       
       - name: Cache The Dev Image
         if: steps.cache.outputs.cache-hit != 'true'
@@ -41,18 +43,41 @@ jobs:
         with:
           key: dev-image-${{ hashFiles('Dockerfile') }}
           path: dev-image.tar
+    
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: dashboard-dist
+          path: dashboard/dist
 
-      - name: Push Dist
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Checkout Dashboard Repository
+        uses: actions/checkout@v6
+        with:
+          ref: dashboard
+
+      - name: Remove existing files
+        run: rm -rf ./*
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dashboard-dist
+      
+      - name: Push Changes
         run: |
           set -x
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git fetch
-          git worktree add ./origin-dist dashboard
-          rm -rf ./origin-dist/* && cp -r ./dashboard/dist/* ./origin-dist/
-          cd ./origin-dist
           git add --all
-          git commit -m "Rebuild dashboard at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          git commit -m "Rebuild dashboard at $(date -u +'%Y-%m-%d %H:%M:%S UTC')" || echo "No changes to commit"
+          ls
           git push
         
