@@ -22,13 +22,12 @@ jobs:
       - name: Checkout Dashboard Repository
         uses: actions/checkout@v6
 
-
-      - name: Restore The Dev Image
-        id: cache
-        uses: actions/cache/restore@v5
-        with:
-          key: dev-image-${{ hashFiles('Dockerfile') }}
-          path: dev-image.tar
+      # - name: Restore The Dev Image
+      #   id: cache
+      #   uses: actions/cache/restore@v5
+      #   with:
+      #     key: dev-image-${{ hashFiles('Dockerfile') }}
+      #     path: dev-image.tar
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -40,12 +39,12 @@ jobs:
           [ -f dev-image.tar ] && touch dev-image.tar
           make -d build-dist
       
-      - name: Cache The Dev Image
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v5
-        with:
-          key: dev-image-${{ hashFiles('Dockerfile') }}
-          path: dev-image.tar
+      # - name: Cache The Dev Image
+      #   if: steps.cache.outputs.cache-hit != 'true'
+      #   uses: actions/cache@v5
+      #   with:
+      #     key: dev-image-${{ hashFiles('Dockerfile') }}
+      #     path: dev-image.tar
     
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
