@@ -148,13 +148,19 @@ const SliceTableViewer = ({
                 width: "20%", 
                 float: "left", 
                 height: "1.5em", 
-                display: "inline-block",
+                paddingRight: "0.3em",
                 borderRight: "2px solid #ddd",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                paddingRight: "0.3em"
-            }}>{value}</div>
+                display: "inline-block",
+            }}>
+            <Tooltip message={value}>
+                <div style={{
+                    height: "1.5em",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                }}>{value}</div>
+            </Tooltip>
+        </div>
     )
 
 
