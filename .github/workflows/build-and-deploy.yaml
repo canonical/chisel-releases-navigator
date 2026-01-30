@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   # schedule:
   #   - cron: '0 0,6,12,18 * * *'
   workflow_dispatch:
@@ -24,7 +27,6 @@ jobs:
           path: dev-image.tar
 
       - name: Build Dashboard
-        if: ${{ github.event_name == 'push' }}
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make build-dist
@@ -37,6 +39,7 @@ jobs:
           path: dev-image.tar
 
       - name: Push Dist
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
           # git config --global user.name 'github-actions[bot]'
           # git config --global user.email 'github-actions[bot]@users.noreply.github.com'
