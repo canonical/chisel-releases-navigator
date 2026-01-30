@@ -14,6 +14,7 @@ help:  ## Show this help message
 data_manager/index.db.br:
 	uv --directory data_manager run data_manager.py
 
+# dev-image.tar: Dockerfile $(shell find dashboard -type f)  ## Build the development Docker image
 dev-image.tar: Dockerfile  ## Build the development Docker image
 	docker build -t $(IMAGE) -f $< .
 	docker save $(IMAGE) > $@

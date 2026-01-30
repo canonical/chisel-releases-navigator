@@ -103,13 +103,13 @@ const SliceTableViewer = ({
         }
 
 
-        return (
+        const cellContent = (
             <a key={index}
                 href={`https://github.com/canonical/chisel-releases/blob/${branch}/slices/${name}.yaml`}
                 style={{
                     backgroundColor: color,
                     width: "4em",
-                    height: "4em",
+                    height: "1.5em",
                     display: "inline-block",
                     borderRight: "2px solid #ddd",
                     color: "#0008",
@@ -117,21 +117,27 @@ const SliceTableViewer = ({
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.2)"}
                 onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
-            >{label}<br />
-
-                {slice?.warnings.length ?
-                    (<Tooltip message={slice.warnings.map(w => "• " + w.warning).join("\n")} className="status-icon">
-                        <i className="bi bi-exclamation-triangle" style={{ color: "#0008" }}></i>
-                    </Tooltip>) : ""}
+            >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
+                    <span>{label}</span>
+                    {slice?.warnings.length ?
+                        (<i className="bi bi-exclamation-triangle status-icon" style={{ color: "#0008" }}></i>) : ""}
+                </div>
             </a>
-        )
+        );
+
+        return slice?.warnings.length ? (
+            <Tooltip key={index} message={slice.warnings.map(w => "• " + w.warning).join("\n")}>
+                {cellContent}
+            </Tooltip>
+        ) : cellContent;
     }
 
     // slicesWarnings
     const formatPackageHeader = (value, index) => (
         <div key={index}
             style={{
-                width: "20%", float: "left", height: "4em", display: "inline-block"
+                width: "20%", float: "left", height: "1.5em", display: "inline-block"
             }}
             className="u-text--muted u-text--small u-text--uppercase" > {value}</div >
     )
@@ -139,8 +145,15 @@ const SliceTableViewer = ({
     const formatPackage = (value, index) => (
         <div key={index}
             style={{
-                width: "20%", float: "left", height: "4em", display: "inline-block",
-                borderRight: "2px solid #ddd"
+                width: "20%", 
+                float: "left", 
+                height: "1.5em", 
+                display: "inline-block",
+                borderRight: "2px solid #ddd",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                paddingRight: "0.3em"
             }}>{value}</div>
     )
 
@@ -190,7 +203,7 @@ const SliceTableViewer = ({
         if (state.altState)
             return state;
 
-        let rows = state.residual_rows.splice(0, 50);
+        let rows = state.residual_rows.splice(0, 100);
         return {
             ...state,
             htmlRows: [state.htmlRows,
