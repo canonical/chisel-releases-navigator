@@ -102,18 +102,33 @@ const SliceTableViewer = ({
             }
         }
 
+        const cellStyle = {
+            backgroundColor: color,
+            width: "4em",
+            height: "1.5em",
+            display: "inline-block",
+            borderRight: "2px solid #ddd",
+            color: "#0008",
+        };
 
+        // If no slice, render as a non-clickable div
+        if (!slice) {
+            return (
+                <div key={index} style={cellStyle}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
+                        <span>{label}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // If slice exists, render as a clickable link
         const cellContent = (
             <a key={index}
                 href={`https://github.com/canonical/chisel-releases/blob/${branch}/slices/${name}.yaml`}
                 style={{
-                    backgroundColor: color,
-                    width: "4em",
-                    height: "1.5em",
-                    display: "inline-block",
-                    borderRight: "2px solid #ddd",
-                    color: "#0008",
-                    cursor: "pointer", // Pointer cursor on hover
+                    ...cellStyle,
+                    cursor: "pointer",
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.2)"}
                 onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
@@ -137,7 +152,7 @@ const SliceTableViewer = ({
     const formatPackageHeader = (value, index) => (
         <div key={index}
             style={{
-                width: "20%", float: "left", height: "1.5em", display: "inline-block"
+                width: "25%", float: "left", height: "1.5em", display: "inline-block"
             }}
             className="u-text--muted u-text--small u-text--uppercase" > {value}</div >
     )
@@ -145,7 +160,7 @@ const SliceTableViewer = ({
     const formatPackage = (value, index) => (
         <div key={index}
             style={{
-                width: "20%", 
+                width: "25%", 
                 float: "left", 
                 height: "1.5em", 
                 paddingRight: "0.3em",
@@ -204,12 +219,31 @@ const SliceTableViewer = ({
         }
     }
 
-    const showMoreResults = state => {
+    const showInitialResults = state => {
 
         if (state.altState)
             return state;
 
         let rows = state.residual_rows.splice(0, 100);
+        return {
+            ...state,
+            htmlRows: [state.htmlRows,
+            ...rows.map((row, rowIndex) => (
+                <div key={rowIndex + state.htmlRows.length} style={{ display: "flex", flexWrap: "nowrap", borderBottom: "2px solid #ddd", }}>
+                    {formatPackage(row[0], 0)}
+                    {row.slice(1).map((value, colIndex) => formatSlice(row[0], state.columns[colIndex + 1], value, colIndex + 1))}
+                </div>
+            ))
+            ]
+        }
+    }
+
+    const showAllResults = state => {
+
+        if (state.altState)
+            return state;
+
+        let rows = state.residual_rows.splice(0, state.residual_rows.length);
         return {
             ...state,
             htmlRows: [state.htmlRows,
@@ -327,10 +361,12 @@ const SliceTableViewer = ({
             let query_result = queryDB(select, searchTerm, category, orderBy);
             const endTime = performance.now()
 
-            if (query_result)
-                setResultsStats({ timer: endTime - startTime, count: query_result.values.length });
+            if (query_result) {
+                const packageCount = [...new Set(query_result.values.map(row => row[0]))].length;
+                setResultsStats({ timer: endTime - startTime, count: query_result.values.length, packages: packageCount });
+            }
 
-            resultDispatch(() => showMoreResults(initResult(query_result)));
+            resultDispatch(() => showInitialResults(initResult(query_result)));
         });
     }, [category, searchTerm, orderBy]);
 
@@ -389,17 +425,17 @@ const SliceTableViewer = ({
                         <button
                             className="p-button"
                             onClick={() => {
-                                resultDispatch((state) => showMoreResults(state));
+                                resultDispatch((state) => showAllResults(state));
                             }}
                             disabled={resultState.residual_rows.length <= 0}
                         >
-                            Show More
+                            Show All
                         </button>
                     </div>
 
                     <div className="row">
                         <div className="u-text--muted u-align-text--center">
-                            Found {resultsStats.count} results in {Math.round(resultsStats.timer)} milliseconds
+                            Found {resultsStats.packages} packages ({resultsStats.count} results) in {Math.round(resultsStats.timer)} milliseconds
                         </div>
                     </div>
                 </>
