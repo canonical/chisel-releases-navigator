@@ -11,6 +11,9 @@ on:
   #   - cron: '0 0,6,12,18 * * *'
   workflow_dispatch:
 
+env:
+  PAGE_URL: https://animated-adventure-8j6kyqy.pages.github.io/
+
 jobs:
   build:
     name: build
@@ -50,34 +53,66 @@ jobs:
           name: dashboard-dist
           path: dashboard/dist
 
+  # deploy:
+  #   name: deploy
+  #   needs: build
+  #   runs-on: ubuntu-24.04
+  #   permissions:
+  #     contents: write
+  #   if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+  #   steps:
+  #     - name: Checkout Dashboard Repository
+  #       uses: actions/checkout@v6
+  #       with:
+  #         ref: dashboard
+
+  #     - name: Remove existing files
+  #       run: rm -rf ./*
+
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: dashboard-dist
+      
+  #     - name: Push Changes
+  #       run: |
+  #         set -x
+  #         git config user.name 'github-actions[bot]'
+  #         git config user.email 'github-actions[bot]@users.noreply.github.com'
+  #         git add --all
+  #         git commit -m "Rebuild dashboard at $(date -u +'%Y-%m-%d %H:%M:%S UTC')" || echo "No changes to commit"
+  #         ls
+  #         git push
+
+  # Single deploy job since we're just deploying
   deploy:
     name: deploy
     needs: build
-    runs-on: ubuntu-24.04
     permissions:
-      contents: write
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ env.PAGE_URL }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Dashboard Repository
-        uses: actions/checkout@v6
-        with:
-          ref: dashboard
-
-      - name: Remove existing files
-        run: rm -rf ./*
-
       - name: Download Artifact
         uses: actions/download-artifact@v7
         with:
           name: dashboard-dist
-      
-      - name: Push Changes
-        run: |
-          set -x
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add --all
-          git commit -m "Rebuild dashboard at $(date -u +'%Y-%m-%d %H:%M:%S UTC')" || echo "No changes to commit"
-          ls
-          git push
+      - name: Debug ls
+        run: ls 
+      # - name: Setup Pages
+      #   uses: actions/configure-pages@v5
+      # - name: Upload artifact
+      #   uses: actions/upload-pages-artifact@v3
+      #   with:
+      #     path: .
+      # - name: Deploy to GitHub Pages
+      #   id: deployment
+      #   uses: actions/deploy-pages@v4
         

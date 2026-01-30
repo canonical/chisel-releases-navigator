@@ -7,12 +7,16 @@ import Page from "./Page";
 const filterPanelData = [
     {
         chips: [
+            { lead: 'branch', value: 'ubuntu-26.04' },
+            { lead: 'branch', value: 'ubuntu-25.10' },
+            { lead: 'branch', value: 'ubuntu-25.04' },
+            { lead: 'branch', value: 'ubuntu-24.10' },
             { lead: 'branch', value: 'ubuntu-24.04' },
             { lead: 'branch', value: 'ubuntu-23.10' },
             { lead: 'branch', value: 'ubuntu-23.04' },
             { lead: 'branch', value: 'ubuntu-22.10' },
             { lead: 'branch', value: 'ubuntu-22.04' },
-            { lead: 'branch', value: 'ubuntu-20.04' }
+            { lead: 'branch', value: 'ubuntu-20.04' },
         ],
         heading: 'Release',
         id: 0

@@ -13,16 +13,7 @@ import tempfile
 
 
 REPO_URL = "https://github.com/canonical/chisel-releases.git"
-ARCH_SIGS = [
-    "arm",
-    "amd64",
-    "x86",
-    "aarch",
-    "i386",
-    "riscv",
-    "ppc64",
-    "s390x",
-]
+ARCH_SIGS = ["arm", "amd64", "x86", "aarch", "i386", "riscv", "ppc64", "s390x"]
 
 
 def get_remote_branches(repo_path: Path) -> list:
