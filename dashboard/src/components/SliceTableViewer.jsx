@@ -95,10 +95,10 @@ const SliceTableViewer = ({
         var color = "#FFF";
 
         if (slice) {
-            color = "#059212";
+            color = "#60A982";
 
             if (slice.warnings.length) {
-                color = "#aa3";
+                color = "#FAD54C";
             }
         }
 

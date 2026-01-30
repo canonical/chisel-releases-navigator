@@ -38,8 +38,8 @@ const viewTable = "slice";
 
 const categories = {
     "All": (row) => true,
-    "LTS": (row) => ["ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
-    "Active Release": (row) => ["ubuntu-25.04", "ubuntu-24.10", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
+    "LTS": (row) => ["ubuntu-26.04", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
+    "Active Release": (row) => ["ubuntu-26.04", "ubuntu-25.10", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
 };
 
 
@@ -80,10 +80,14 @@ const Index = () => (
                 <div className="col-12">
                     <h2>Chisel Releases Navigator</h2>
                 </div>
-                {/* <div className="col-12">
+                <div className="col-12">
                     <p className="u-no-max-width">
+                        The Chisel Releases Navigator helps to explore and analyze the contents of 
+                        <a href="https://www.github.com/canonical/chisel-releases" target="_blank" rel="noreferrer">chisel-releases</a> repo.
+                        It provides an interactive table view of the release slices, along with filtering and searching.
+
                     </p>
-                </div> */}
+                </div>
             </div>
 
             <div className="row">

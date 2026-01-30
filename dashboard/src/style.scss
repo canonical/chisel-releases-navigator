@@ -124,6 +124,10 @@ body {
   cursor: pointer;
   z-index: 1000;
   transition: padding-bottom 0.3s ease;
+  background-color: #e95620ee !important;
+  border-color: #E95420ee !important;
+  // font-size: 0.85rem;
+  // padding: 0.4rem 0.8rem;
 }
 
 .promo-tab:hover,
