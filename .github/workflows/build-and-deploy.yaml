@@ -49,7 +49,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git fetch
-          git worktree add ./origin-dist remotes/origin/dashboard
+          git worktree add ./origin-dist dashboard
           rm -rf ./origin-dist/* && cp -r ./dashboard/dist/* ./origin-dist/
           cd ./origin-dist
           git add --all
