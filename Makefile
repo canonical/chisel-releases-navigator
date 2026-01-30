@@ -32,11 +32,11 @@ run-server: _load-dev-image  ## Run the development server
 	docker run $(DOCKER_FLAGS) $(IMAGE) webpack serve --no-client-overlay
 
 dashboard/dist: _load-dev-image data_manager/index.db.br
-	# copy dist out of container
 	docker run $(DOCKER_FLAGS) \
 		--volume .:/host:rw \
 		$(IMAGE) \
 		bash -c "webpack build --mode production && cp -r dist /host/"
+	rm -rf dashboard/dist && mv dist dashboard/dist
 
 .PHONY: build-dist
 build-dist: dashboard/dist  ## Build the production distribution
@@ -45,8 +45,5 @@ build-dist: dashboard/dist  ## Build the production distribution
 clean:  ## Clean up generated files
 	rm -f data_manager/index.db
 	rm -f data_manager/index.db.br
-	rm -f index.db
-	rm -f index.db.br
 	rm -rf dashboard/dist
-	rm -rf dist
 	rm -f image.tar

@@ -41,11 +41,8 @@ jobs:
           # git config --global user.name 'github-actions[bot]'
           # git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git worktree add ./origin-dist dashboard
-          rm -rf ./origin-dist/* && cp -r ./dist/* ./origin-dist/
+          rm -rf ./origin-dist/* && cp -r ./dashboard/dist/* ./origin-dist/
           cd ./origin-dist
           git add --all
           git commit -m "Rebuild dashboard at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
           git push origin HEAD:dashboard
-          
-
-          

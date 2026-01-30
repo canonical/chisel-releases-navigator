@@ -3,7 +3,7 @@ name: Feedback
 about: Suggest an improvement to the Chisel-Release-Navigator
 title: 'Feedback: <Feedback Title>'
 labels: feedback
-assignees: clay-lake
+assignees: lczyk
 
 ---
 
