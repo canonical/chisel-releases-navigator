@@ -19,6 +19,7 @@ jobs:
       - name: Checkout Dashboard Repository
         uses: actions/checkout@v6
 
+
       - name: Restore The Dev Image
         id: cache
         uses: actions/cache/restore@v5
@@ -44,11 +45,14 @@ jobs:
       - name: Push Dist
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
-          # git config --global user.name 'github-actions[bot]'
-          # git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git worktree add ./origin-dist dashboard
+          set -x
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git fetch
+          git worktree add ./origin-dist remotes/origin/dashboard
           rm -rf ./origin-dist/* && cp -r ./dashboard/dist/* ./origin-dist/
           cd ./origin-dist
           git add --all
           git commit -m "Rebuild dashboard at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-          git push origin HEAD:dashboard
+          git push
+        
