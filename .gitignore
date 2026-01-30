@@ -1,0 +1,17 @@
+.venv
+*.pyc
+__pycache__/
+.ruff_cache/
+.mypy_cache/
+
+dashboard/node_modules/
+dashboard/dist/
+
+# database files
+.db
+.db.br
+
+dist/
+origin-dist/
+
+dev-image.tar
