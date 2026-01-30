@@ -59,7 +59,7 @@ module.exports = {
         }),
         new CopyWebpackPlugin({
             patterns: [
-                { from: '../index.db.br', to: 'index.db.br' },
+                { from: './index.db.br', to: 'index.db.br' },
                 { from: './node_modules/sql.js/dist/sql-wasm.wasm', to: 'sql-wasm.wasm' }
             ]
         }),

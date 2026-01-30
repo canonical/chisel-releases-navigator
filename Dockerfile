@@ -1,12 +1,12 @@
 FROM ubuntu:noble
-ENV VENV_PATH=/venv
 
-RUN apt update && apt install -y npm git python3.12 python3.12-venv curl
+RUN apt update && apt install --yes --no-install-recommends npm && \
+    apt clean && rm -rf /var/lib/apt/lists/*
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN npm install --global yarn && npm cache clean --force
 
-COPY requirements.txt requirements.txt
-RUN /root/.local/bin/uv sync --python 3.12 --venv $VENV_PATH --requirements requirements.txt
+COPY ./dashboard /dashboard
+WORKDIR /dashboard
+RUN chown --recursive ubuntu:ubuntu /dashboard
 
-# always activate the virtual environment
-ENV PATH="$VENV_PATH/"bin":$PATH"
+RUN yarn install --frozen-lockfile --ignore-engines
