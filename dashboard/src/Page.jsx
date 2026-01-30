@@ -30,7 +30,7 @@ const Page = ({ rootContent }) => {
                 <nav aria-label="Footer">
                     <Row>
                         <div className="col-12">
-                            OCI-Dashboard
+                            Chisel Releases Navigator &copy; {new Date().getFullYear()} Canonical Ltd.
                         </div>
                     </Row>
                     <Row>
