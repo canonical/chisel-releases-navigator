@@ -13,8 +13,6 @@ import tempfile
 
 
 REPO_URL = "https://github.com/canonical/chisel-releases.git"
-REPO_ROOT = Path(__file__).parents[1]
-DATA_DIR = REPO_ROOT / "data"
 ARCH_SIGS = [
     "arm",
     "amd64",
@@ -91,14 +89,6 @@ def initialize_database(output: Path) -> tuple[SqliteDatabase, type, type]:
     db.connect()
     db.create_tables([Slice, Meta])
     return db, Slice, Meta
-
-
-def get_release_branches(data_path: Path):
-    return [
-        branch
-        for branch in get_remote_branches(data_path)
-        if branch.startswith("ubuntu-")
-    ]
 
 
 def process_slice(Slice, branch: str, sdf_path: Path):
