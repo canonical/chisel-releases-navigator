@@ -57,22 +57,20 @@ const searchColumns = {
     "branch": { column: "slice.branch" },
     "package": { column: "slice.package" },
     "warnings": { column: "slice.warnings" },
-    // "type": { column: "slice.type" }
 };
 
 const searchLogic = (row, keywordArray, groupedData) => {
 
-    const searchText = `${row.branch} ${row.package} ${row.type}`.toLowerCase(); // TODO: move to row in default view
+    const searchText = `${row.branch} ${row.package}`.toLowerCase(); // TODO: move to row in default view
     const keywordFound = keywordArray.every(keyword => searchText.includes(keyword.toLowerCase()));
     const branchFound = groupedData.branch ? groupedData.branch.some ^ (filter => row.branch == filter) : true;
-    const typeFound = groupedData.type ? groupedData.type.some(filter => row.type == filter) : true;
 
     // This is ugly fix it later, if the warning string has more than 2 characters there is at least one item
     const warningsFound = groupedData.warnings ? groupedData.warnings.some(
         filter => (row.warnings.length > 2) && filter
     ) : true;
 
-    return keywordFound && branchFound && typeFound && warningsFound;
+    return keywordFound && branchFound && warningsFound;
 
 };
 

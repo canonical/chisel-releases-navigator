@@ -10,8 +10,11 @@ IMAGE=dev-image
 .PHONY: help
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-	
-data_scraper/index.db.br:
+
+.PHONY: build
+build: build-dist  ## Alias for 'build-dist'
+
+data_scraper/index.db.br: data_scraper/data_scraper.py
 	uv --directory data_scraper run data_scraper.py
 
 # dev-image.tar: Dockerfile $(shell find dashboard -type f)  ## Build the development Docker image
@@ -28,9 +31,8 @@ run-dev-image: _load-dev-image  ## Run an interactive shell in the development i
 _load-dev-image: dev-image.tar
 	docker load < $<
 
-
-.PHONY: run-server
-run-server: _load-dev-image  ## Run the development server
+.PHONY: serve
+serve: _load-dev-image  ## Run the development server
 	docker run $(DOCKER_FLAGS) $(IMAGE) webpack serve --no-client-overlay
 
 dashboard/dist: _load-dev-image data_scraper/index.db.br

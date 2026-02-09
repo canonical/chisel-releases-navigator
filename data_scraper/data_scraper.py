@@ -68,7 +68,6 @@ def initialize_database(output: Path) -> tuple[SqliteDatabase, type, type]:
     class Slice(BaseModel):
         branch = TextField()
         package = TextField()
-        branch_type = TextField()
         definition = TextField()
         raw_definition = TextField()
         warnings = TextField(default="[]")
@@ -91,7 +90,6 @@ def process_slice(Slice, branch: str, sdf_path: Path):
     Slice.create(
         branch=branch,
         package=sdf_path.stem,
-        branch_type="release",
         definition=data_json,
         raw_definition=sdf_text,
         warnings=warnings,

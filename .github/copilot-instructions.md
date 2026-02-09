@@ -12,3 +12,4 @@
 - the dashboard uses npm to manage dependencies and build the static files using webpack
 - dashboard UI uses Canonical React Components + vanilla-framework; styling lives in dashboard/src/style.scss
 - the dashboard uses webpack to bundle the static files
+- the data model between the scraper and the dashboard needs to be kept in sync
