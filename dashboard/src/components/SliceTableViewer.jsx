@@ -91,7 +91,7 @@ const SliceTableViewer = ({
 
 
     const formatSlice = (name, branch, slice, index) => {
-        const label = slice ? crc16(slice.raw_definition) : "";
+        const label = slice ? "XXXX" : "";
         var color = "#FFF";
 
         if (slice) {
@@ -180,7 +180,7 @@ const SliceTableViewer = ({
 
 
 
-    const select = "package, branch, definition, raw_definition, warnings";
+    const select = "package, branch, definition, warnings";
 
     const initResult = queryResult => {
 
@@ -196,7 +196,7 @@ const SliceTableViewer = ({
             [pkg, ...releases.map(rel => {
                 const row = queryResult.values.find(row => row[0] === pkg && row[1] === rel);
                 try {
-                    return row ? { definition: JSON.parse(row[2]), raw_definition: row[3], warnings: JSON.parse(row[4]) } : null; // Return object with columns 2 and 3
+                    return row ? { definition: JSON.parse(row[2]), warnings: JSON.parse(row[3]) } : null; // Return object with columns 2 and 3
                 } catch (e) {
                     return null;
                 }

@@ -69,7 +69,6 @@ def initialize_database(output: Path) -> tuple[SqliteDatabase, type, type]:
         branch = TextField()
         package = TextField()
         definition = TextField()
-        raw_definition = TextField()
         warnings = TextField(default="[]")
 
     class Meta(BaseModel):
@@ -91,7 +90,6 @@ def process_slice(Slice, branch: str, sdf_path: Path):
         branch=branch,
         package=sdf_path.stem,
         definition=data_json,
-        raw_definition=sdf_text,
         warnings=warnings,
     )
 
