@@ -75,30 +75,36 @@ const SliceTableViewer = ({
             }}>{value}</div>
     )
 
-    const crc16 = function (input) {
-        const data = new Uint8Array((typeof input === "string") ? [...input].map(c => c.charCodeAt(0)) : input);
-
-        var POLY = 0x8408, INIT = 0, XOROUT = 0;
-        for (var crc = INIT, i = 0; i < data.length; i++) {
-            crc = crc ^ data[i];
-            for (var j = 0; j < 8; j++) {
-                crc = crc & 1 ? crc >>> 1 ^ POLY : crc >>> 1;
-            }
+    const normalizeVersion = (version) => (version === null || version === undefined ? "null" : String(version));
+    const shortenVersionForLabel = (version) => {
+        var trimmed = version.split("ubuntu")[0];
+        trimmed = trimmed.split("build")[0];
+        trimmed = trimmed.split("-")[0];
+        trimmed = trimmed.split("+")[0];
+        trimmed = trimmed.split("~")[0];
+        // trim everything *before* the first colon, if it exists (to remove epoch)
+        if (trimmed.includes(":")) {
+            trimmed = trimmed.split(":").slice(1).join(":");
         }
-        return ((crc ^ XOROUT) >>> 0).toString(16).padStart(4, '0'); // Convert to hex and pad to 8 characters
+        return trimmed;        
+    }
 
-    };
-
+    const withVersionNote = (notes, fullVersion) => [{ note: fullVersion }, ...(notes || [])];
 
     const formatSlice = (name, branch, slice, index) => {
-        const label = slice ? "XXXX" : "";
+        const fullVersion = slice ? normalizeVersion(slice.version) : "";
+        const label = slice ? shortenVersionForLabel(fullVersion) : "";
+        const notes = slice ? withVersionNote(slice.notes, fullVersion) : [];
+        const notesMessage = notes.length ? notes.map(n => `- ${n.note}`).join("\n") : "";
         var color = "#FFF";
 
         if (slice) {
-            color = "#60A982";
-
-            if (slice.notes.length) {
+            if (slice.version === null || slice.version === undefined) {
+                color = "#E94B4B";
+            } else if (slice.notes.length) {
                 color = "#FAD54C";
+            } else {
+                color = "#60A982";
             }
         }
 
@@ -107,6 +113,7 @@ const SliceTableViewer = ({
             width: "4em",
             height: "1.5em",
             display: "inline-block",
+            position: "relative",
             borderRight: "2px solid #ddd",
             color: "#0008",
         };
@@ -116,7 +123,7 @@ const SliceTableViewer = ({
             return (
                 <div key={index} style={cellStyle}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
-                        <span>{label}</span>
+                        <span style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "clip", whiteSpace: "nowrap" }}>{label}</span>
                     </div>
                 </div>
             );
@@ -126,6 +133,8 @@ const SliceTableViewer = ({
         const cellContent = (
             <a key={index}
                 href={`https://github.com/canonical/chisel-releases/blob/${branch}/slices/${name}.yaml`}
+                className="slice-cell"
+                aria-label={notesMessage || undefined}
                 style={{
                     ...cellStyle,
                     cursor: "pointer",
@@ -134,18 +143,32 @@ const SliceTableViewer = ({
                 onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
             >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
-                    <span>{label}</span>
-                    {slice?.notes.length ?
-                        (<i className="bi bi-exclamation-triangle status-icon" style={{ color: "#0008" }}></i>) : ""}
+                    <span style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "clip", whiteSpace: "nowrap" }}>{label}</span>
                 </div>
+                {slice?.notes.length ? (
+                    <span
+                        aria-hidden="true"
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            right: 0,
+                            width: 0,
+                            height: 0,
+                            borderTop: "8px solid var(--vf-color--background-dark, #262626)",
+                            borderLeft: "8px solid transparent",
+                            pointerEvents: "none",
+                        }}
+                    />
+                ) : ""}
+                {notesMessage ? (
+                    <span className="slice-tooltip" aria-hidden="true">
+                        {notesMessage}
+                    </span>
+                ) : ""}
             </a>
         );
 
-        return slice?.notes.length ? (
-            <Tooltip key={index} message={slice.notes.map(n => "• " + n.note).join("\n")}>
-                {cellContent}
-            </Tooltip>
-        ) : cellContent;
+        return cellContent;
     }
 
     // slicesNotes
@@ -180,7 +203,7 @@ const SliceTableViewer = ({
 
 
 
-    const select = "package, branch, definition, notes";
+    const select = "package, branch, definition, notes, version";
 
     const initResult = queryResult => {
 
@@ -196,7 +219,7 @@ const SliceTableViewer = ({
             [pkg, ...releases.map(rel => {
                 const row = queryResult.values.find(row => row[0] === pkg && row[1] === rel);
                 try {
-                    return row ? { definition: JSON.parse(row[2]), notes: JSON.parse(row[3]) } : null; // Return object with columns 2 and 3
+                    return row ? { definition: JSON.parse(row[2]), notes: JSON.parse(row[3]), version: row[4] } : null; // Return object with columns 2-4
                 } catch (e) {
                     return null;
                 }
