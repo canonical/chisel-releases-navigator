@@ -23,15 +23,15 @@ const filterPanelData = [
     },
     {
         chips: [
-            { lead: 'warnings', value: true },
-            { lead: 'warnings', value: "double glob" },
-            { lead: 'warnings', value: "architecture comments" },
-            { lead: 'warnings', value: "large comments" },
-            { lead: 'warnings', value: "fixed minor versions" },
-            { lead: 'warnings', value: "missing copyright" },
-            { lead: 'warnings', value: "unsorted content" }
+            { lead: 'notes', value: true },
+            { lead: 'notes', value: "double glob" },
+            { lead: 'notes', value: "architecture comments" },
+            { lead: 'notes', value: "large comments" },
+            { lead: 'notes', value: "fixed minor versions" },
+            { lead: 'notes', value: "missing copyright" },
+            { lead: 'notes', value: "unsorted content" }
         ],
-        heading: 'Warnings',
+        heading: 'Notes',
         id: 1
     }
 ];
@@ -56,7 +56,7 @@ const orderByConfig = [
 const searchColumns = {
     "branch": { column: "slice.branch" },
     "package": { column: "slice.package" },
-    "warnings": { column: "slice.warnings" },
+    "notes": { column: "slice.notes" },
 };
 
 const searchLogic = (row, keywordArray, groupedData) => {
@@ -65,12 +65,12 @@ const searchLogic = (row, keywordArray, groupedData) => {
     const keywordFound = keywordArray.every(keyword => searchText.includes(keyword.toLowerCase()));
     const branchFound = groupedData.branch ? groupedData.branch.some ^ (filter => row.branch == filter) : true;
 
-    // This is ugly fix it later, if the warning string has more than 2 characters there is at least one item
-    const warningsFound = groupedData.warnings ? groupedData.warnings.some(
-        filter => (row.warnings.length > 2) && filter
+    // This is ugly fix it later, if the note string has more than 2 characters there is at least one item
+    const notesFound = groupedData.notes ? groupedData.notes.some(
+        filter => (row.notes.length > 2) && filter
     ) : true;
 
-    return keywordFound && branchFound && warningsFound;
+    return keywordFound && branchFound && notesFound;
 
 };
 

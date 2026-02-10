@@ -2,26 +2,23 @@
 import re
 
 import argparse
+from datetime import datetime
+import json
 import logging
 from pathlib import Path
-import json
-from peewee import Model, SqliteDatabase, TextField
-from datetime import datetime
+import sqlite3
 import subprocess
-import brotli
-import yaml
 import tempfile
 
+import brotli
+import yaml
 
 REPO_URL = "https://github.com/canonical/chisel-releases.git"
-ARCH_SIGS = ["arm", "amd64", "x86", "aarch", "i386", "riscv", "ppc64", "s390x"]
+
+ARCH_SIGS = {"arm", "amd64", "x86", "aarch", "i386", "riscv", "ppc64", "s390x"}
 
 
 def get_remote_branches(repo_path: Path) -> list:
-    """
-    Returns a list of remote branch names (without the 'origin/' prefix)
-    by parsing the output of `git branch -r`.
-    """
     result = subprocess.run(
         ["git", "branch", "-r"],
         cwd=str(repo_path),
@@ -43,10 +40,6 @@ def get_remote_branches(repo_path: Path) -> list:
 
 
 def checkout_branch(repo_path: Path, branch: str):
-    """
-    Checks out the given branch. If a local branch doesn't exist,
-    it creates one tracking the remote branch.
-    """
     try:
         # Try to check out the branch (if it exists locally)
         subprocess.run(["git", "checkout", branch], cwd=str(repo_path), check=True)
@@ -59,101 +52,80 @@ def checkout_branch(repo_path: Path, branch: str):
         )
 
 
-def initialize_database(output: Path) -> tuple[SqliteDatabase, type, type]:
-    db = SqliteDatabase(output)
-
-    class BaseModel(Model):
-        class Meta:
-            database = db
-
-    class Slice(BaseModel):
-        branch = TextField()
-        package = TextField()
-        definition = TextField()
-        warnings = TextField(default="[]")
-
-    class Meta(BaseModel):
-        key = TextField()
-        value = TextField(default="")
-
-    db.connect()
-    db.create_tables([Slice, Meta])
-    return db, Slice, Meta
-
-
-def process_slice(Slice, branch: str, sdf_path: Path):
-    sdf_text = sdf_path.read_text()
-    data = yaml.safe_load(sdf_text)
-    data_json = json.dumps(data)
-    warnings = json.dumps(check_sdf(data, sdf_text))
-
-    Slice.create(
-        branch=branch,
-        package=sdf_path.stem,
-        definition=data_json,
-        warnings=warnings,
+def initialize_database(output: Path) -> sqlite3.Connection:
+    conn = sqlite3.connect(output)
+    conn.execute(
+        """
+        CREATE TABLE slice (
+            branch TEXT NOT NULL,
+            package TEXT NOT NULL,
+            definition TEXT NOT NULL,
+            notes TEXT DEFAULT '[]'
+        )
+        """
     )
+    conn.execute(
+        """
+        CREATE TABLE meta (
+            key TEXT NOT NULL UNIQUE,
+            value TEXT
+        )
+        """
+    )
+    return conn
 
-def process_slice_new(branch: str, sdf_path: Path) -> dict[str, object]:
+
+def process_slice(sdf_path: Path) -> dict[str, str]:
     sdf_text = sdf_path.read_text()
     data = yaml.safe_load(sdf_text)
     data_json = json.dumps(data)
-    warnings = check_sdf(data, sdf_text)
+    notes_json = json.dumps(check_sdf(data, sdf_text))
 
     return {
         "package": sdf_path.stem,
         "definition": data_json,
-        "warnings": warnings,
+        "notes": notes_json,
     }
 
 
-def create_warning(
-    warning: str,
+def create_note(
+    note: str,
     text: str | None = None,
     line: int | None = None,
 ) -> dict[str, str | int]:
-    warning_dict: dict[str, str | int] = {"warning": warning}
+    note_dict: dict[str, str | int] = {"note": note}
 
     if text is not None:
-        warning_dict["text"] = text
+        note_dict["text"] = text
 
     if line is not None:
-        warning_dict["line"] = line
+        note_dict["line"] = line
 
-    return warning_dict
+    return note_dict
 
 
 def check_missing_copyright(data_json):
-    """
-    Checks if the 'copyright' field is missing in the JSON data.
-    """
-    warnings = []
+    notes = []
     if "copyright" not in data_json["slices"]:
-        warnings.append(create_warning("missing copyright"))
-    return warnings
+        notes.append(create_note("missing copyright"))
+    return notes
 
 
 def check_double_glob(data_json, sdf_text):
-    """
-    Checks for double glob patterns in the JSON data and SDF text.
-    """
-    warnings = []
+    notes = []
     if "**" in sdf_text:
-        warnings.append(create_warning("double glob"))
+        notes.append(create_note("double glob"))
 
     for _name, content in data_json["slices"].items():
         contents_keys = list(content.get("contents", {}).keys())
         for path in contents_keys:
             if "**" in path:
-                warnings.append(create_warning("double glob"))
-    return warnings
+                notes.append(create_note("double glob"))
+    return notes
 
 
 def check_excess_blank_lines(sdf_text):
-    """
-    Checks for excessive blank lines in the SDF text.
-    """
-    warnings = []
+    notes = []
     blanks = 0
     for line in sdf_text.splitlines():
         if line.strip() == "":
@@ -161,62 +133,54 @@ def check_excess_blank_lines(sdf_text):
         else:
             blanks = 0
         if blanks > 2:
-            warnings.append(create_warning("excess blank lines"))
+            notes.append(create_note("excess blank lines"))
             break
-    return warnings
+    return notes
 
 
 def check_architecture_comments(sdf_text):
-    """
-    Checks for architecture-related comments in the SDF text.
-    """
-    warnings = []
+    notes = []
     for line in sdf_text.splitlines():
         if "#" in line:
             comments_content = line.split("#", 1)[1]
             if any(arch in comments_content for arch in ARCH_SIGS):
-                warnings.append(create_warning("architecture comments"))
+                notes.append(create_note("architecture comments"))
                 break
-    return warnings
+    return notes
 
 
 def check_unsorted_contents(data_json):
-    """
-    Checks if contents and essentials in the JSON data are unsorted.
-    """
-    warnings = []
+    notes = []
     for _name, content in data_json["slices"].items():
         contents_keys = list(content.get("contents", {}).keys())
         essentials = content.get("essential", [])
 
         for names in [contents_keys, essentials]:
             if names != sorted(names):
-                warnings.append(create_warning("unsorted content"))
+                notes.append(create_note("unsorted content"))
                 break
-    return warnings
+    return notes
 
 
 def check_sdf(data_json, sdf_text):
-    """
-    Runs all checks on the JSON data and SDF text.
-    """
-    warnings = []
-    warnings.extend(check_missing_copyright(data_json))
-    warnings.extend(check_double_glob(data_json, sdf_text))
-    warnings.extend(check_excess_blank_lines(sdf_text))
-    warnings.extend(check_architecture_comments(sdf_text))
-    warnings.extend(check_unsorted_contents(data_json))
-    return warnings
+    notes = []
+    notes.extend(check_missing_copyright(data_json))
+    notes.extend(check_double_glob(data_json, sdf_text))
+    notes.extend(check_excess_blank_lines(sdf_text))
+    notes.extend(check_architecture_comments(sdf_text))
+    notes.extend(check_unsorted_contents(data_json))
+    return notes
 
 
 def main(args: argparse.Namespace) -> None:
+
+    # Clone the repo and process the slices in each ubuntu-* branch
+    results: dict[str, list[dict[str, str]]] = {}
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdir = Path(tmpdirname)
 
         subprocess.run(["git", "clone", REPO_URL, str(tmpdir)], check=True)
         subprocess.run(["git", "fetch", "--all"], cwd=str(tmpdir), check=True)
-
-        args.db.unlink(missing_ok=True)
 
 
         origin_branches = [
@@ -225,26 +189,28 @@ def main(args: argparse.Namespace) -> None:
             if branch.startswith("ubuntu-")
         ]
 
-        results: dict[str, list[dict[str, object]]] = {}
         for branch in origin_branches:
-            results[branch] = []
             checkout_branch(tmpdir, branch)
             for sdf_path in tmpdir.glob("slices/*"):
-                # process_slice(Slice, branch, sdf_path)
-                result = process_slice_new(branch, sdf_path)
-                results[branch].append(result)
+                result = process_slice(sdf_path)
+                results.setdefault(branch, []).append(result)
 
-        db, Slice, Meta = initialize_database(args.db)
-        for branch, slices in results.items():
-            for slice in slices:
-                Slice.create(  # type: ignore
-                    branch=branch,
-                    package=slice["package"],
-                    definition=slice["definition"],
-                    warnings=slice["warnings"],
-                )
-        Meta.create(key="last_update", value=datetime.now().isoformat())  # type: ignore
-        db.close()
+    # save the results to the database
+    args.db.unlink(missing_ok=True)
+    conn = initialize_database(args.db)
+
+    for branch, branch_results in results.items():
+        for result in branch_results:
+            conn.execute(
+                "INSERT INTO slice (branch, package, definition, notes) VALUES (?, ?, ?, ?)",
+                (branch, result["package"], result["definition"], result["notes"]),
+            )
+    conn.execute(
+        "INSERT INTO meta (key, value) VALUES (?, ?)",
+        ("last_update", datetime.now().isoformat()),
+    )
+    conn.commit()
+    conn.close()
 
     # Compress the database using Brotli
     compressed = brotli.compress(args.db.read_bytes())

@@ -97,7 +97,7 @@ const SliceTableViewer = ({
         if (slice) {
             color = "#60A982";
 
-            if (slice.warnings.length) {
+            if (slice.notes.length) {
                 color = "#FAD54C";
             }
         }
@@ -135,20 +135,20 @@ const SliceTableViewer = ({
             >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
                     <span>{label}</span>
-                    {slice?.warnings.length ?
+                    {slice?.notes.length ?
                         (<i className="bi bi-exclamation-triangle status-icon" style={{ color: "#0008" }}></i>) : ""}
                 </div>
             </a>
         );
 
-        return slice?.warnings.length ? (
-            <Tooltip key={index} message={slice.warnings.map(w => "• " + w.warning).join("\n")}>
+        return slice?.notes.length ? (
+            <Tooltip key={index} message={slice.notes.map(n => "• " + n.note).join("\n")}>
                 {cellContent}
             </Tooltip>
         ) : cellContent;
     }
 
-    // slicesWarnings
+    // slicesNotes
     const formatPackageHeader = (value, index) => (
         <div key={index}
             style={{
@@ -180,7 +180,7 @@ const SliceTableViewer = ({
 
 
 
-    const select = "package, branch, definition, warnings";
+    const select = "package, branch, definition, notes";
 
     const initResult = queryResult => {
 
@@ -196,7 +196,7 @@ const SliceTableViewer = ({
             [pkg, ...releases.map(rel => {
                 const row = queryResult.values.find(row => row[0] === pkg && row[1] === rel);
                 try {
-                    return row ? { definition: JSON.parse(row[2]), warnings: JSON.parse(row[3]) } : null; // Return object with columns 2 and 3
+                    return row ? { definition: JSON.parse(row[2]), notes: JSON.parse(row[3]) } : null; // Return object with columns 2 and 3
                 } catch (e) {
                     return null;
                 }
