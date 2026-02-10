@@ -65,7 +65,7 @@ const searchLogic = (row, keywordArray, groupedData) => {
 
     const searchText = `${row.branch} ${row.package}`.toLowerCase(); // TODO: move to row in default view
     const keywordFound = keywordArray.every(keyword => searchText.includes(keyword.toLowerCase()));
-    const branchFound = groupedData.branch ? groupedData.branch.some ^ (filter => row.branch == filter) : true;
+    const branchFound = groupedData.branch ? groupedData.branch.some(filter => row.branch == filter) : true;
 
     // This is ugly fix it later, if the note string has more than 2 characters there is at least one item
     const notesFound = groupedData.notes ? groupedData.notes.some(
