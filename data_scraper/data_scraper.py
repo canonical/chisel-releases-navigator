@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 
 import argparse
 import logging
@@ -92,6 +93,18 @@ def process_slice(Slice, branch: str, sdf_path: Path):
         definition=data_json,
         warnings=warnings,
     )
+
+def process_slice_new(branch: str, sdf_path: Path) -> dict[str, object]:
+    sdf_text = sdf_path.read_text()
+    data = yaml.safe_load(sdf_text)
+    data_json = json.dumps(data)
+    warnings = check_sdf(data, sdf_text)
+
+    return {
+        "package": sdf_path.stem,
+        "definition": data_json,
+        "warnings": warnings,
+    }
 
 
 def create_warning(
@@ -205,8 +218,6 @@ def main(args: argparse.Namespace) -> None:
 
         args.db.unlink(missing_ok=True)
 
-        db, Slice, Meta = initialize_database(args.db)
-        Meta.create(key="last_update", value=datetime.now().isoformat())  # type: ignore
 
         origin_branches = [
             branch
@@ -214,11 +225,25 @@ def main(args: argparse.Namespace) -> None:
             if branch.startswith("ubuntu-")
         ]
 
+        results: dict[str, list[dict[str, object]]] = {}
         for branch in origin_branches:
+            results[branch] = []
             checkout_branch(tmpdir, branch)
             for sdf_path in tmpdir.glob("slices/*"):
-                process_slice(Slice, branch, sdf_path)
+                # process_slice(Slice, branch, sdf_path)
+                result = process_slice_new(branch, sdf_path)
+                results[branch].append(result)
 
+        db, Slice, Meta = initialize_database(args.db)
+        for branch, slices in results.items():
+            for slice in slices:
+                Slice.create(  # type: ignore
+                    branch=branch,
+                    package=slice["package"],
+                    definition=slice["definition"],
+                    warnings=slice["warnings"],
+                )
+        Meta.create(key="last_update", value=datetime.now().isoformat())  # type: ignore
         db.close()
 
     # Compress the database using Brotli

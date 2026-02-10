@@ -12,7 +12,7 @@ help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: build
-build: build-dist  ## Alias for 'build-dist'
+build: dashboard/dist  ## Build the production distribution
 
 data_scraper/index.db.br: data_scraper/data_scraper.py
 	uv --directory data_scraper run data_scraper.py
@@ -42,9 +42,6 @@ dashboard/dist: _load-dev-image data_scraper/index.db.br
 	docker exec build-temp webpack build
 	docker cp build-temp:/dashboard/dist ./dashboard/dist
 	docker rm -f build-temp
-
-.PHONY: build-dist
-build-dist: dashboard/dist  ## Build the production distribution
 
 .PHONY: clean
 clean:  ## Clean up generated files
