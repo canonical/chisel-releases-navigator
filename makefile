@@ -15,7 +15,7 @@ help:  ## Show this help message
 build: dashboard/dist  ## Build the production distribution
 
 data_scraper/index.db.br: data_scraper/data_scraper.py
-	uv --directory data_scraper run data_scraper.py
+	uv --directory data_scraper run data_scraper.py -j-1 --force --compress index.db
 
 # dev-image.tar: Dockerfile $(shell find dashboard -type f)  ## Build the development Docker image
 dev-image.tar: Dockerfile dashboard/**/*  ## Build the development Docker image
