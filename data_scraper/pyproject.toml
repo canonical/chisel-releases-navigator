@@ -14,6 +14,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "colorlog>=6.10.1",
+    "joblib>=1.5.3",
     "mypy>=1.19.1",
     "pytest>=9.0.2",
     "ruff>=0.15.0",

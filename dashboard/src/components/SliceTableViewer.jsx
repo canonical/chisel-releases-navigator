@@ -41,8 +41,10 @@ const SliceTableViewer = ({
 }) => {
 
 
-    const tab_list = Object.keys(categories);
-    const [category, _setCategory] = useState(getQueryObject("c", tab_list[0]));
+    const [categoriesState, setCategoriesState] = useState(categories);
+    const tab_list = Object.keys(categoriesState);
+    const initialCategory = tab_list[0] ?? "All";
+    const [category, _setCategory] = useState(getQueryObject("c", initialCategory));
     // wrap certain states such that we can store and recover values from query string
     const setCategory = val => {
         setQueryObject("c", val)
@@ -60,6 +62,7 @@ const SliceTableViewer = ({
     }
     const [resultsStats, setResultsStats] = useState();
     const [dbStats, setDbStats] = useState({});
+    const [filterPanelDataState, setFilterPanelDataState] = useState(filterPanelData);
     // const [dbMeta, setDbMeta] = useState({});
 
     const resultReducer = (state, state_func) => {
@@ -273,6 +276,44 @@ const SliceTableViewer = ({
             ${order}
             `;
 
+    const buildFilterPanelData = (branches) => {
+        const branchPanel = {
+            chips: branches.map(branch => ({ lead: "branch", value: branch })),
+            heading: "Branch",
+            id: 0,
+        };
+        const restPanels = filterPanelData.map((panel, index) => ({
+            ...panel,
+            id: index + 1,
+        }));
+        return [branchPanel, ...restPanels];
+    };
+
+    const buildCategories = (releases) => {
+        const categoriesMap = {
+            "All": () => true,
+        };
+        const ltsBranches = releases
+            .filter(release => release.branch && release.lts)
+            .map(release => release.branch);
+        if (ltsBranches.length) {
+            categoriesMap["LTS"] = row => ltsBranches.includes(row.branch);
+        }
+        const supportedBranches = releases
+            .filter(release => release.branch && release.supported)
+            .map(release => release.branch);
+        if (supportedBranches.length) {
+            categoriesMap["Supported"] = row => supportedBranches.includes(row.branch);
+        }
+        const develBranches = releases
+            .filter(release => release.branch && release.devel)
+            .map(release => release.branch);
+        if (develBranches.length) {
+            categoriesMap["Development"] = row => develBranches.includes(row.branch);
+        }
+        return categoriesMap;
+    };
+
     const loadDb = async () => {
         // Careful with state in this async function, any state set
         // may not be readable directly after!
@@ -296,7 +337,7 @@ const SliceTableViewer = ({
         db = new SQL.Database(decompressedBuffer);
 
         // load meta data
-        let queryResult, countsResult, _;
+        let queryResult, countsResult, branchesResult, releasesResult, _;
         [queryResult, _] = db.exec("SELECT * FROM meta");
 
         // TODO, modify query to just extract the date 
@@ -309,6 +350,21 @@ const SliceTableViewer = ({
             "SELECT COUNT(*) AS slice_count, COUNT(DISTINCT package) AS package_count, COUNT(DISTINCT branch) AS release_count FROM slice"
         );
         const [sliceCount, packageCount, releaseCount] = countsResult?.values?.[0] ?? [0, 0, 0];
+
+        [branchesResult, _] = db.exec("SELECT DISTINCT branch FROM slice ORDER BY branch DESC");
+        const branches = branchesResult?.values?.map(row => row[0]) ?? [];
+        setFilterPanelDataState(buildFilterPanelData(branches));
+
+        [releasesResult, _] = db.exec(
+            "SELECT branch, lts, supported, devel FROM release WHERE branch IS NOT NULL"
+        );
+        const releases = releasesResult?.values?.map(row => ({
+            branch: row[0],
+            lts: Boolean(row[1]),
+            supported: Boolean(row[2]),
+            devel: Boolean(row[3]),
+        })) ?? [];
+        setCategoriesState(buildCategories(releases));
 
         setDbStats({
             "Updated": date.toLocaleString(),
@@ -335,7 +391,7 @@ const SliceTableViewer = ({
                     return acc;
                 }, {});
 
-        const categoryFilter = categories[category];
+        const categoryFilter = categoriesState[category] ?? (() => true);
         const search = generateSearchFunction(keywordArray, groupedData, categoryFilter);
         db.create_function("search", search);
         const query = createQueryTemplate(viewTable, select, order);
@@ -360,6 +416,15 @@ const SliceTableViewer = ({
         });
     }, [category, searchTerm, orderBy]);
 
+    useEffect(() => {
+        if (!categoriesState[category]) {
+            const nextCategory = Object.keys(categoriesState)[0];
+            if (nextCategory) {
+                setCategory(nextCategory);
+            }
+        }
+    }, [categoriesState, category]);
+
     return (
         <div>
 
@@ -368,7 +433,7 @@ const SliceTableViewer = ({
 
                     <SearchAndFilter
                         existingSearchData={searchTerm}
-                        filterPanelData={filterPanelData}
+                        filterPanelData={filterPanelDataState}
                         returnSearchData={setSearchTerm}
                     />
 

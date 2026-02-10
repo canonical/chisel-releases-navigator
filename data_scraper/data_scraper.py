@@ -2,7 +2,6 @@
 # spellchecker: ignore worktree Referer
 
 from __future__ import annotations
-from mypy.fastparse import N
 
 import argparse
 import gzip
@@ -32,7 +31,7 @@ import yaml
 from filelock import FileLock
 
 # spellchecker: ignore Marcin Konowalczyk lczyk
-__VERSION__ = "0.2.0"
+__VERSION__ = "0.3.0"
 __AUTHOR___ = "Marcin Konowalczyk @lczyk"
 
 CHISEL_RELEASES_URL = os.environ.get("CHISEL_RELEASES_URL", "https://github.com/canonical/chisel-releases")
@@ -68,6 +67,9 @@ SliceDefinitionJson = dict[str, object]
 class UbuntuRelease:
     version: str
     codename: str
+    lts: bool
+    supported: bool
+    devel: bool
 
     def __str__(self) -> str:
         return f"ubuntu-{self.version} ({self.codename})"
@@ -83,20 +85,22 @@ class UbuntuRelease:
         return self.version_tuple < other.version_tuple
 
     @classmethod
-    def from_distro_info_line(cls, line: str) -> UbuntuRelease:
+    def from_distro_info_line(cls, line: str, supported: bool, devel: bool) -> UbuntuRelease:
         match = re.match(r"Ubuntu (\d{1,2}\.\d{2})( LTS)? \"([A-Za-z ]+)\"", line)
         if not match:
             raise ValueError(f"Invalid distro-info line: '{line}'")
-        return cls(version=match.group(1), codename=match.group(3))
+        return cls(
+            version=match.group(1), codename=match.group(3), lts=bool(match.group(2)), supported=supported, devel=devel
+        )
 
     @classmethod
     def from_branch_name(cls, branch: str) -> UbuntuRelease:
         assert branch.startswith("ubuntu-"), "Branch name must start with 'ubuntu-'"
         version = branch.split("-", 1)[1]
-        codename = _VERSION_TO_CODENAME.get(version)
-        if codename is None:
+        release = _VERSION_TO_RELEASE.get(version)
+        if release is None:
             raise ValueError(f"Unknown Ubuntu version '{version}' for branch '{branch}'")
-        return cls(version=version, codename=codename)
+        return release
 
     @property
     def branch_name(self) -> str:
@@ -107,18 +111,17 @@ class UbuntuRelease:
         """Return the first word of the codename in lowercase. E.g. 'focal' from 'Focal Fossa'."""
         return self.codename.split()[0].lower()
 
-    @classmethod
-    def from_dict(cls, data: dict) -> UbuntuRelease:
-        return cls(
-            version=data["version"],
-            codename=data["codename"],
-        )
+    # @classmethod
+    # def from_dict(cls, data: dict) -> UbuntuRelease:
+    #     return cls(
+    #         version=data["version"],
+    #         codename=data["codename"],
+    #         lts=data["lts"],
+    #     )
 
 
 _ALL_RELEASES: set[UbuntuRelease] = set()
-_VERSION_TO_CODENAME: dict[str, str] = {}
-SUPPORTED_RELEASES: set[UbuntuRelease] = set()
-_DEVEL_RELEASE: UbuntuRelease | None = None
+_VERSION_TO_RELEASE: dict[str, UbuntuRelease] = {}
 
 
 def init_distro_info() -> None:
@@ -126,16 +129,22 @@ def init_distro_info() -> None:
     supported_output = sub.getoutput("distro-info --supported --fullname").strip()
     devel_output = sub.getoutput("distro-info --devel --fullname").strip()
 
-    global _ALL_RELEASES, _VERSION_TO_CODENAME, SUPPORTED_RELEASES, _DEVEL_RELEASE
+    global _ALL_RELEASES, _VERSION_TO_RELEASE
 
-    _ALL_RELEASES = set(UbuntuRelease.from_distro_info_line(line) for line in all_output.splitlines())
+    # NOTE: This is slightly awkward because we need to know whether a release is supported when parsing the lines,
+    # but we only know which versions are supported after parsing all the lines.
+    _supported_releases = set(supported_output.splitlines())
+    _devel_releases = set(devel_output.splitlines()) if devel_output else set()
+
+    _ALL_RELEASES = set()
+    for line in all_output.splitlines():
+        supported = line in _supported_releases
+        devel = line in _devel_releases
+        release = UbuntuRelease.from_distro_info_line(line, supported=supported, devel=devel)
+        _ALL_RELEASES.add(release)
+
+    _VERSION_TO_RELEASE = {release.version: release for release in _ALL_RELEASES}
     _VERSION_TO_CODENAME = {release.version: release.codename for release in _ALL_RELEASES}
-
-    SUPPORTED_RELEASES = set(UbuntuRelease.from_distro_info_line(line) for line in supported_output.splitlines())
-    assert SUPPORTED_RELEASES.issubset(_ALL_RELEASES), "Supported releases must be a subset of all releases."
-
-    _DEVEL_RELEASE = UbuntuRelease.from_distro_info_line(devel_output) if devel_output else None
-    assert _DEVEL_RELEASE is None or _DEVEL_RELEASE in _ALL_RELEASES, "Devel release must be in all releases."
 
 
 ################################################################################
@@ -386,7 +395,7 @@ def _get_packages_by_release(
     with timing_context() as elapsed:
         if jobs == 1:
             for release, component, repo in _product:
-                package_listings[(release, component, repo)] = _get_package_list(release, component, repo)
+                package_listings[(release, component, repo)] = _get_packages(release, component, repo)
 
         else:
             with ThreadPoolExecutor(max_workers=jobs) as executor:
@@ -394,7 +403,7 @@ def _get_packages_by_release(
                     "Using a thread pool of size %d.",
                     getattr(executor, "_max_workers", -1),
                 )
-                results = list(executor.map(lambda args: _get_package_list(*args), _product))
+                results = list(executor.map(lambda args: _get_packages(*args), _product))
             package_listings = {args: pkgs for args, pkgs in zip(_product, results, strict=True)}
 
     logging.info("Fetched packages for %d releases in %.2f seconds.", len(releases), elapsed())
@@ -406,6 +415,14 @@ def _get_packages_by_release(
             packages_by_release[release][package.name] = package
 
     return packages_by_release
+
+
+if os.environ.get("USE_MEMORY", "0") == "1":
+    import joblib
+
+    memory = joblib.Memory(".memory", verbose=0)
+    # _get_packages = memory.cache(_get_packages)
+    _get_packages_by_release = memory.cache(_get_packages_by_release, ignore=["jobs"])
 
 
 @dataclass(frozen=True, slots=True, order=False)
@@ -446,7 +463,7 @@ class Package:
         )
 
 
-def _get_package_list(
+def _get_packages(
     release: UbuntuRelease,
     component: Component,
     repo: Repo,
@@ -659,6 +676,20 @@ def init_db(conn: sqlite3.Connection) -> None:
         )
         """
     )
+
+    conn.execute(
+        """
+        CREATE TABLE release (
+            version TEXT NOT NULL UNIQUE,
+            branch TEXT UNIQUE,
+            codename TEXT NOT NULL,
+            lts BOOLEAN NOT NULL,
+            supported BOOLEAN NOT NULL,
+            devel BOOLEAN NOT NULL
+        )
+        """
+    )
+
     conn.execute(
         """
         CREATE TABLE meta (
@@ -682,20 +713,30 @@ def insert_into_slice(
         INSERT INTO slice (branch, package, version, definition, notes)
         VALUES (?, ?, ?, ?, ?)
         """,
-        (
-            branch,
-            package,
-            version,
-            definition,
-            notes,
-        ),
+        (branch, package, version, definition, notes),
+    )
+
+
+def insert_into_release(
+    conn: sqlite3.Connection,
+    release: UbuntuRelease,
+    *,
+    set_branch_to_null: bool = False,
+) -> None:
+    branch_name = None if set_branch_to_null else release.branch_name
+    conn.execute(
+        """
+        INSERT INTO release (branch, version, codename, lts, supported, devel)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (branch_name, release.version, release.codename, release.lts, release.supported, release.devel),
     )
 
 
 def insert_into_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
     conn.execute(
         "INSERT INTO meta (key, value) VALUES (?, ?)",
-        ("last_update", datetime.now().isoformat()),
+        (key, value),
     )
 
 
@@ -757,6 +798,8 @@ def _write_db(
         db_path.unlink(missing_ok=True)
         with db_connection(db_path) as conn:
             init_db(conn)
+
+            # Insert slices
             for release, slices in slices_by_release.items():
                 notes_for_release = notes_by_release.get(release)
                 packages_for_release = packages_by_release.get(release)
@@ -792,6 +835,15 @@ def _write_db(
                         slice_json_str,
                         notes_json_str,
                     )
+
+            # Insert releases
+            for release in slices_by_release:
+                insert_into_release(conn, release)
+
+            # Insert all the other entries from the distro-info call, but set branch to null
+            for release in _ALL_RELEASES:
+                if release not in slices_by_release:
+                    insert_into_release(conn, release, set_branch_to_null=True)
 
             insert_into_meta(conn, "last_update", datetime.now().isoformat())
 

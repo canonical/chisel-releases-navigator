@@ -7,22 +7,6 @@ import Page from "./Page";
 const filterPanelData = [
     {
         chips: [
-            { lead: 'branch', value: 'ubuntu-26.04' },
-            { lead: 'branch', value: 'ubuntu-25.10' },
-            { lead: 'branch', value: 'ubuntu-25.04' },
-            { lead: 'branch', value: 'ubuntu-24.10' },
-            { lead: 'branch', value: 'ubuntu-24.04' },
-            { lead: 'branch', value: 'ubuntu-23.10' },
-            { lead: 'branch', value: 'ubuntu-23.04' },
-            { lead: 'branch', value: 'ubuntu-22.10' },
-            { lead: 'branch', value: 'ubuntu-22.04' },
-            { lead: 'branch', value: 'ubuntu-20.04' },
-        ],
-        heading: 'Release',
-        id: 0
-    },
-    {
-        chips: [
             { lead: 'notes', value: true },
             { lead: 'notes', value: "double glob" },
             { lead: 'notes', value: "architecture comments" },
@@ -33,7 +17,7 @@ const filterPanelData = [
             { lead: 'version', value: "missing" }
         ],
         heading: 'Notes',
-        id: 1
+        id: 0
     }
 ];
 
@@ -41,12 +25,7 @@ const contextMenuLinks = [];
 
 const viewTable = "slice";
 
-const categories = {
-    "All": (row) => true,
-    "LTS": (row) => ["ubuntu-26.04", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
-    "Active Release": (row) => ["ubuntu-26.04", "ubuntu-25.10", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
-};
-
+const categories = {};
 
 const orderByConfig = [
     { name: "Name A-Z", value: "package ASC" },
