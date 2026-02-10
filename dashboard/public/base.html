@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
 
-<head></head>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" href="/index.js" as="script" />
+    <link rel="preload" href="/index.db.br" as="fetch" type="application/octet-stream" crossorigin />
+    <link rel="preload" href="/sql-wasm.wasm" as="fetch" type="application/wasm" crossorigin />
+</head>
 
 <body>
     <div id="root"></div>

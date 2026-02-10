@@ -36,7 +36,7 @@ save-image:  ## Save the development Docker image IMAGE_PATH
 .PHONY: serve
 serve:  ## Run the development server
 	if [ -z "$(IMAGE_PATH)" ]; then $(MAKE) build-image; else docker load --input $(IMAGE_PATH); fi
-	docker run $(DOCKER_FLAGS) $(IMAGE) webpack serve --no-client-overlay
+	docker run $(DOCKER_FLAGS) $(IMAGE) webpack serve --no-client-overlay --mode production
 
 dashboard/dist: data_scraper/index.db.br
 	if [ -z "$(IMAGE_PATH)" ]; then $(MAKE) build-image; else docker load --input $(IMAGE_PATH); fi
