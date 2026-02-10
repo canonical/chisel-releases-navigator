@@ -296,28 +296,25 @@ const SliceTableViewer = ({
         db = new SQL.Database(decompressedBuffer);
 
         // load meta data
-        let queryResult, _, imgCount, digestCount;
+        let queryResult, countsResult, _;
         [queryResult, _] = db.exec("SELECT * FROM meta");
 
         // TODO, modify query to just extract the date 
-        const meta = Object.fromEntries(queryResult.values.map(row => [row[1], row[2]]));
+        const meta = Object.fromEntries(queryResult.values.map(row => [row[0], row[1]]));
         // setDbMeta(meta);
         let date = new Date(meta.last_update);
 
 
-        // TODO: Complete these queries
-        // [queryResult, _] = db.exec("SELECT max(RowID) FROM repository");
-        // imgCount = queryResult.values[0];
-        imgCount = 0;
-
-        // [queryResult, _] = db.exec("SELECT max(RowID) FROM digest");
-        // digestCount = queryResult.values[0];
-        digestCount = 0;
+        [countsResult, _] = db.exec(
+            "SELECT COUNT(*) AS slice_count, COUNT(DISTINCT package) AS package_count, COUNT(DISTINCT branch) AS release_count FROM slice"
+        );
+        const [sliceCount, packageCount, releaseCount] = countsResult?.values?.[0] ?? [0, 0, 0];
 
         setDbStats({
             "Updated": date.toLocaleString(),
-            "Images": imgCount,
-            "Digests": digestCount
+            "Packages": packageCount,
+            "Slice Definition Files": sliceCount,
+            "Ubuntu Releases": releaseCount
         });
     }
 
