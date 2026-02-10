@@ -2,6 +2,7 @@
 # spellchecker: ignore worktree Referer
 
 from __future__ import annotations
+from mypy.fastparse import N
 
 import argparse
 import gzip
@@ -15,7 +16,6 @@ import shutil
 import signal
 import sqlite3
 import subprocess as sub
-import sys
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -375,9 +375,9 @@ def _get_slices_by_release(
 def _get_packages_by_release(
     releases: set[UbuntuRelease],
     jobs: int | None = 1,
-) -> dict[UbuntuRelease, set[PackageName]]:
+) -> dict[UbuntuRelease, dict[PackageName, Package]]:
     logging.info("Fetching packages for %d releases...", len(releases))
-    package_listings: dict[tuple[UbuntuRelease, Component, Repo], set[PackageName]] = {}
+    package_listings: dict[tuple[UbuntuRelease, Component, Repo], set[Package]] = {}
 
     _components = sorted(COMPONENTS)
     _repos = sorted(REPOS)
@@ -400,35 +400,105 @@ def _get_packages_by_release(
     logging.info("Fetched packages for %d releases in %.2f seconds.", len(releases), elapsed())
 
     # Union all components and repos
-    packages_by_release: dict[UbuntuRelease, set[PackageName]] = {r: set() for r in releases}
+    packages_by_release: dict[UbuntuRelease, dict[PackageName, Package]] = {r: {} for r in releases}
     for (release, _component, _repo), packages in package_listings.items():
-        packages_by_release[release].update(packages)
+        for package in packages:
+            packages_by_release[release][package.name] = package
 
     return packages_by_release
 
 
-_PACKAGE_RE = re.compile(r"^Package:\s*(\S+)", re.MULTILINE)
+@dataclass(frozen=True, slots=True, order=False)
+class Package:
+    name: PackageName
+    version: str
+    release: UbuntuRelease
+    component: Component
+    repo: Repo
+
+    @classmethod
+    def from_content_hunk(
+        cls,
+        hunk: str,
+        release: UbuntuRelease,
+        component: Component,
+        repo: Repo,
+    ) -> Package | None:
+        """Parse a package from a hunk of the Packages file content.
+        Return None if the hunk is not a valid package entry."""
+        name_match = ""
+        version_match = ""
+        for line in hunk.splitlines():
+            if line.startswith("Package:"):
+                name_match = line.split(":", 1)[1].strip()
+            elif line.startswith("Version:"):
+                version_match = line.split(":", 1)[1].strip()
+
+        if not name_match or not version_match:
+            return None
+
+        return cls(
+            name=name_match,
+            version=version_match,
+            release=release,
+            component=component,
+            repo=repo,
+        )
 
 
 def _get_package_list(
     release: UbuntuRelease,
     component: Component,
     repo: Repo,
-) -> set[PackageName]:
+) -> set[Package]:
     name = f"{release.short_codename}-{repo}" if repo else release.short_codename
 
     package_url = f"https://archive.ubuntu.com/ubuntu/dists/{name}/{component}/binary-amd64/Packages.gz"
     headers = {
-        "User-Agent": f"{sys.argv[0]}/{__VERSION__}",
+        # "User-Agent": "data-scraper",
         "Referer": f"https://archive.ubuntu.com/ubuntu/dists/{name}/{component}/binary-amd64",
     }
-    response = requests.get(package_url, headers=headers)
 
-    if response.status_code != 200:
-        # retry with old-releases if not found in archive
-        package_url = f"https://old-releases.ubuntu.com/ubuntu/dists/{name}/{component}/binary-amd64/Packages.gz"
-        headers["Referer"] = f"https://old-releases.ubuntu.com/ubuntu/dists/{name}/{component}/binary-amd64"
-        response = requests.get(package_url, headers=headers)
+    old_package_url = f"https://old-releases.ubuntu.com/ubuntu/dists/{name}/{component}/binary-amd64/Packages.gz"
+    old_headers = dict(headers)
+    old_headers["Referer"] = f"https://old-releases.ubuntu.com/ubuntu/dists/{name}/{component}/binary-amd64"
+
+    timeout = (10, 30)  # seconds
+    response: requests.Response | None = None
+    last_error: Exception | None = None
+    for attempt in range(1, 4):
+        try:
+            response = requests.get(package_url, headers=headers, timeout=timeout)
+            if response.status_code == 200:
+                break
+            if response.status_code == 404:
+                # retry with old-releases if not found in archive
+                response = requests.get(old_package_url, headers=old_headers, timeout=timeout)
+                if response.status_code == 200:
+                    break
+            if attempt < 3:
+                logging.warning(
+                    "Non-200 response for %s (status %d), retrying (%d/3).",
+                    package_url,
+                    response.status_code,
+                    attempt,
+                )
+            else:
+                break
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < 3:
+                logging.warning(
+                    "Request for %s failed (%d/3): %s",
+                    package_url,
+                    attempt,
+                    exc,
+                )
+            else:
+                break
+
+    if response is None:
+        raise Exception(f"Failed to download package list from '{package_url}'. Error: {last_error}")
 
     if response.status_code != 200:
         raise Exception(
@@ -438,7 +508,14 @@ def _get_package_list(
     with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as f:
         content = f.read().decode("utf-8")
 
-    return set(m.group(1) for m in _PACKAGE_RE.finditer(content))
+    split_content = content.split("\n\n")
+    packages = set()
+    for pkg_str in split_content:
+        package = Package.from_content_hunk(pkg_str, release, component, repo)
+        if package:
+            packages.add(package)
+
+    return packages
 
 
 ## STATIC ANALYSIS #############################################################
@@ -576,6 +653,7 @@ def init_db(conn: sqlite3.Connection) -> None:
         CREATE TABLE slice (
             branch TEXT NOT NULL,
             package TEXT NOT NULL,
+            version TEXT,
             definition TEXT NOT NULL,
             notes TEXT DEFAULT '[]'
         )
@@ -595,17 +673,19 @@ def insert_into_slice(
     conn: sqlite3.Connection,
     branch: str,
     package: str,
+    version: str | None,
     definition: str,
     notes: str,
 ) -> None:
     conn.execute(
         """
-        INSERT INTO slice (branch, package, definition, notes)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO slice (branch, package, version, definition, notes)
+        VALUES (?, ?, ?, ?, ?)
         """,
         (
             branch,
             package,
+            version,
             definition,
             notes,
         ),
@@ -669,6 +749,7 @@ def _write_db(
     db_path: Path,
     slices_by_release: dict[UbuntuRelease, dict[PackageName, SliceDefinitionText]],
     notes_by_release: dict[UbuntuRelease, dict[PackageName, list[Note]]],
+    packages_by_release: dict[UbuntuRelease, dict[PackageName, Package]],
 ) -> None:
     logging.info("Writing data to database...")
 
@@ -677,16 +758,37 @@ def _write_db(
         with db_connection(db_path) as conn:
             init_db(conn)
             for release, slices in slices_by_release.items():
-                notes_for_release = notes_by_release.get(release, {})
+                notes_for_release = notes_by_release.get(release)
+                packages_for_release = packages_by_release.get(release)
+
+                if notes_for_release is None:
+                    logging.critical("No notes found for release %s. This should not happen. Skipping.", release)
+                    continue
+
+                if packages_for_release is None:
+                    logging.critical(
+                        "No package information found for release %s. This should not happen. Skipping.", release
+                    )
+                    continue
+
                 for package_name, slice_text in slices.items():
                     slice_json = yaml.safe_load(slice_text)
                     slice_json_str = json.dumps(slice_json)
                     notes_json_str = json.dumps(notes_for_release.get(package_name, []))
 
+                    # Get the version of the package
+                    package_version: str | None = None
+                    package_info = packages_for_release.get(package_name)
+                    if package_info is None:
+                        logging.warning("No package info found for package '%s' in release %s.", package_name, release)
+                    else:
+                        package_version = package_info.version
+
                     insert_into_slice(
                         conn,
                         release.branch_name,
                         package_name,
+                        package_version,
                         slice_json_str,
                         notes_json_str,
                     )
@@ -753,8 +855,7 @@ def main(args: argparse.Namespace) -> None:
     # Get all the data up front
     releases = _ubuntu_branches_in_chisel_releases()
 
-    # TODO: parse versions for each package for each release and add that to the db
-    _packages_by_release = _get_packages_by_release(releases, args.jobs)
+    packages_by_release = _get_packages_by_release(releases, args.jobs)
 
     slices_by_release = _get_slices_by_release(releases, jobs=args.jobs, cleanup=not args.debug)
 
@@ -762,7 +863,7 @@ def main(args: argparse.Namespace) -> None:
     notes_by_release = _get_notes_by_release(slices_by_release)
 
     # Write the data to the db
-    _write_db(args.db_path, slices_by_release, notes_by_release)
+    _write_db(args.db_path, slices_by_release, notes_by_release, packages_by_release)
 
     if args.compress:
         _compress_db(args.db_path, args.compressed_db_path)
