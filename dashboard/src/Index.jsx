@@ -29,7 +29,8 @@ const filterPanelData = [
             { lead: 'notes', value: "large comments" },
             { lead: 'notes', value: "fixed minor versions" },
             { lead: 'notes', value: "missing copyright" },
-            { lead: 'notes', value: "unsorted content" }
+            { lead: 'notes', value: "unsorted content" },
+            { lead: 'version', value: "missing" }
         ],
         heading: 'Notes',
         id: 1
@@ -57,6 +58,7 @@ const searchColumns = {
     "branch": { column: "slice.branch" },
     "package": { column: "slice.package" },
     "notes": { column: "slice.notes" },
+    "version": { column: "slice.version" },
 };
 
 const searchLogic = (row, keywordArray, groupedData) => {
@@ -70,7 +72,11 @@ const searchLogic = (row, keywordArray, groupedData) => {
         filter => (row.notes.length > 2) && filter
     ) : true;
 
-    return keywordFound && branchFound && notesFound;
+    const versionFound = groupedData.version ? groupedData.version.some(
+        filter => (filter === "missing" ? row.version === null || row.version === undefined : row.version === filter)
+    ) : true;
+
+    return keywordFound && branchFound && notesFound && versionFound;
 
 };
 
