@@ -33,10 +33,6 @@ save-image:  ## Save the development Docker image IMAGE_PATH
 # 	if [ -z "$(IMAGE_PATH)" ]; then $(MAKE) build-image; else docker load --input $(IMAGE_PATH); fi
 # 	docker run -it $(DOCKER_FLAGS) $(IMAGE) /bin/bash
 
-# .PHONY: _load-dev-image
-# _load-dev-image: dev-image.tar
-# 	docker load < $<
-
 .PHONY: serve
 serve:  ## Run the development server
 	if [ -z "$(IMAGE_PATH)" ]; then $(MAKE) build-image; else docker load --input $(IMAGE_PATH); fi

@@ -152,6 +152,14 @@ body {
   color: #0008;
 }
 
+.slice-cell:link,
+.slice-cell:visited,
+.slice-cell:hover,
+.slice-cell:active {
+  color: #0008;
+  text-decoration: none;
+}
+
 .slice-cell__content {
   display: flex;
   justify-content: space-between;
@@ -185,10 +193,10 @@ body {
   top: 100%;
   right: 0;
   margin-top: 2px;
-  padding: 0.2rem 0.4rem;
+  padding: 0.35rem 0.6rem;
   background-color: var(--vf-color--background-dark, #262626);
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   line-height: 1.2;
   white-space: pre-line;
   overflow-wrap: anywhere;
@@ -198,8 +206,8 @@ body {
   visibility: hidden;
   transition: opacity 0.12s ease;
   pointer-events: none;
-  min-width: 8rem;
-  max-width: 24rem;
+  width: max-content;
+  max-width: min(32rem, 80vw);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 

@@ -85,20 +85,27 @@ const SliceTableViewer = ({
         return trimmed;        
     }
 
-    const withVersionNote = (notes, fullVersion) => [{ note: fullVersion }, ...(notes || [])];
-
     const formatSlice = (name, branch, slice, index) => {
         const fullVersion = slice ? normalizeVersion(slice.version) : "";
         const label = slice ? shortenVersionForLabel(fullVersion) : "";
-        const notes = slice ? withVersionNote(slice.notes, fullVersion) : [];
-        const notesMessage = notes.length ? notes.map(n => `- ${n.note}`).join("\n") : "";
+            const notes = slice ? slice.notes : [];
+            const tooltipParts = slice ? [
+                `${name}@${branch} (<component>/<repo>)`,
+                `${fullVersion}`,
+                "",
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+            ] : [];
+            if (notes.length) {
+                tooltipParts.push("", "Notes:", ...notes.map(n => `- ${n.note}`));
+            }
+            const tooltipMessage = tooltipParts.join("\n");
         var color = "#FFF";
 
         if (slice) {
             if (slice.version === null || slice.version === undefined) {
                 color = "#E94B4B";
             } else if (slice.notes.length) {
-                color = "#FAD54C";
+                color = "#60a2a9";
             } else {
                 color = "#60A982";
             }
@@ -124,7 +131,7 @@ const SliceTableViewer = ({
             <a key={index}
                 href={`https://github.com/canonical/chisel-releases/blob/${branch}/slices/${name}.yaml`}
                 className="slice-cell"
-                aria-label={notesMessage || undefined}
+                aria-label={tooltipMessage || undefined}
                 style={{
                     ...cellStyle,
                     cursor: "pointer",
@@ -139,9 +146,9 @@ const SliceTableViewer = ({
                         className="slice-cell__notch"
                     />
                 ) : ""}
-                {notesMessage ? (
+                {tooltipMessage ? (
                     <span className="slice-tooltip" aria-hidden="true">
-                        {notesMessage}
+                        {tooltipMessage}
                     </span>
                 ) : ""}
             </a>
