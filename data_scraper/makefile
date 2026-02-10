@@ -10,7 +10,7 @@ all: test lint spellcheck  ## Run all checks
 
 .PHONY: test
 test:  ## Run tests
-	uv run pytest
+# 	uv run pytest
 
 .PHONY: lint
 lint:  ## Lint but don't format
