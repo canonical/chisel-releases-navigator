@@ -168,12 +168,21 @@ body {
   padding: 0 0.2em;
 }
 
+.slice-cell__content--center {
+  justify-content: center;
+}
+
 .slice-cell__label {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: clip;
   white-space: nowrap;
+}
+
+.slice-cell__label--center {
+  text-align: center;
+  width: 100%;
 }
 
 .slice-cell__notch {

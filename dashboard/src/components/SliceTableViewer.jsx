@@ -86,24 +86,25 @@ const SliceTableViewer = ({
     }
 
     const formatSlice = (name, branch, slice, index) => {
+        const hasVersion = slice && slice.version !== null && slice.version !== undefined;
         const fullVersion = slice ? normalizeVersion(slice.version) : "";
-        const label = slice ? shortenVersionForLabel(fullVersion) : "";
-            const notes = slice ? slice.notes : [];
-            const tooltipParts = slice ? [
-                `${name}@${branch} (<component>/<repo>)`,
-                `${fullVersion}`,
-                "",
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-            ] : [];
-            if (notes.length) {
-                tooltipParts.push("", "Notes:", ...notes.map(n => `- ${n.note}`));
-            }
-            const tooltipMessage = tooltipParts.join("\n");
+        const label = slice ? (hasVersion ? shortenVersionForLabel(fullVersion) : "!") : "";
+        const notes = slice ? slice.notes : [];
+        const tooltipParts = slice ? [
+            `${name}@${branch} (<component>/<repo>)`,
+            `${fullVersion}`,
+            "",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+        ] : [];
+        if (notes.length) {
+            tooltipParts.push("", "Notes:", ...notes.map(n => `- ${n.note}`));
+        }
+        const tooltipMessage = tooltipParts.join("\n");
         var color = "#FFF";
 
         if (slice) {
-            if (slice.version === null || slice.version === undefined) {
-                color = "#E94B4B";
+            if (!hasVersion) {
+                color = "#FAD54C";
             } else if (slice.notes.length) {
                 color = "#60a2a9";
             } else {
@@ -119,8 +120,8 @@ const SliceTableViewer = ({
         if (!slice) {
             return (
                 <div key={index} className="slice-cell" style={cellStyle}>
-                    <div className="slice-cell__content">
-                        <span className="slice-cell__label">{label}</span>
+                    <div className={`slice-cell__content${hasVersion ? "" : " slice-cell__content--center"}`}>
+                        <span className={`slice-cell__label${hasVersion ? "" : " slice-cell__label--center"}`}>{label}</span>
                     </div>
                 </div>
             );
@@ -137,8 +138,8 @@ const SliceTableViewer = ({
                     cursor: "pointer",
                 }}
             >
-                <div className="slice-cell__content">
-                    <span className="slice-cell__label">{label}</span>
+                <div className={`slice-cell__content${hasVersion ? "" : " slice-cell__content--center"}`}>
+                    <span className={`slice-cell__label${hasVersion ? "" : " slice-cell__label--center"}`}>{label}</span>
                 </div>
                 {slice?.notes.length ? (
                     <span
