@@ -68,11 +68,7 @@ const SliceTableViewer = ({
     }
 
     const formatReleaseHeader = (value, index) => (
-        <div className="u-text--muted u-text--small u-text--uppercase"
-            style={{
-                width: "4em", display: "inline-block", marginBottom: "1em",
-                writingMode: "vertical-lr", textOrientation: "mixed", transform: "rotate(-20deg)", transformOrigin: "top right"
-            }}>{value}</div>
+        <div className="u-text--muted u-text--small u-text--uppercase release-header">{value}</div>
     )
 
     const normalizeVersion = (version) => (version === null || version === undefined ? "null" : String(version));
@@ -110,20 +106,14 @@ const SliceTableViewer = ({
 
         const cellStyle = {
             backgroundColor: color,
-            width: "4em",
-            height: "1.5em",
-            display: "inline-block",
-            position: "relative",
-            borderRight: "2px solid #ddd",
-            color: "#0008",
         };
 
         // If no slice, render as a non-clickable div
         if (!slice) {
             return (
-                <div key={index} style={cellStyle}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
-                        <span style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "clip", whiteSpace: "nowrap" }}>{label}</span>
+                <div key={index} className="slice-cell" style={cellStyle}>
+                    <div className="slice-cell__content">
+                        <span className="slice-cell__label">{label}</span>
                     </div>
                 </div>
             );
@@ -139,25 +129,14 @@ const SliceTableViewer = ({
                     ...cellStyle,
                     cursor: "pointer",
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.2)"}
-                onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
             >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
-                    <span style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "clip", whiteSpace: "nowrap" }}>{label}</span>
+                <div className="slice-cell__content">
+                    <span className="slice-cell__label">{label}</span>
                 </div>
                 {slice?.notes.length ? (
                     <span
                         aria-hidden="true"
-                        style={{
-                            position: "absolute",
-                            top: 0,
-                            right: 0,
-                            width: 0,
-                            height: 0,
-                            borderTop: "8px solid var(--vf-color--background-dark, #262626)",
-                            borderLeft: "8px solid transparent",
-                            pointerEvents: "none",
-                        }}
+                        className="slice-cell__notch"
                     />
                 ) : ""}
                 {notesMessage ? (
@@ -173,30 +152,13 @@ const SliceTableViewer = ({
 
     // slicesNotes
     const formatPackageHeader = (value, index) => (
-        <div key={index}
-            style={{
-                width: "25%", float: "left", height: "1.5em", display: "inline-block"
-            }}
-            className="u-text--muted u-text--small u-text--uppercase" > {value}</div >
+        <div key={index} className="u-text--muted u-text--small u-text--uppercase package-header"> {value}</div >
     )
 
     const formatPackage = (value, index) => (
-        <div key={index}
-            style={{
-                width: "25%", 
-                float: "left", 
-                height: "1.5em", 
-                paddingRight: "0.3em",
-                borderRight: "2px solid #ddd",
-                display: "inline-block",
-            }}>
+        <div key={index} className="package-cell">
             <Tooltip message={value}>
-                <div style={{
-                    height: "1.5em",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                }}>{value}</div>
+                <div className="package-cell__text">{value}</div>
             </Tooltip>
         </div>
     )
@@ -252,7 +214,7 @@ const SliceTableViewer = ({
             ...state,
             htmlRows: [state.htmlRows,
             ...rows.map((row, rowIndex) => (
-                <div key={rowIndex + state.htmlRows.length} style={{ display: "flex", flexWrap: "nowrap", borderBottom: "2px solid #ddd", }}>
+                <div key={rowIndex + state.htmlRows.length} className="slice-row">
                     {formatPackage(row[0], 0)}
                     {row.slice(1).map((value, colIndex) => formatSlice(row[0], state.columns[colIndex + 1], value, colIndex + 1))}
                 </div>
@@ -271,7 +233,7 @@ const SliceTableViewer = ({
             ...state,
             htmlRows: [state.htmlRows,
             ...rows.map((row, rowIndex) => (
-                <div key={rowIndex + state.htmlRows.length} style={{ display: "flex", flexWrap: "nowrap", borderBottom: "2px solid #ddd", }}>
+                <div key={rowIndex + state.htmlRows.length} className="slice-row">
                     {formatPackage(row[0], 0)}
                     {row.slice(1).map((value, colIndex) => formatSlice(row[0], state.columns[colIndex + 1], value, colIndex + 1))}
                 </div>
