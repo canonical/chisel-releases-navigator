@@ -11,8 +11,8 @@ IMAGE=dev-image
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-# .PHONY: build
-# build: dashboard/dist  ## Build the production distribution
+.PHONY: build-dist
+build-dist: dashboard/dist  ## Build the production distribution
 
 data_scraper/index.db.br: data_scraper/data_scraper.py
 	uv --directory data_scraper run data_scraper.py -j-1 --force --compress index.db

@@ -35,9 +35,7 @@ jobs:
       - name: Build Dashboard
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          [ -f dev-image.tar ] && touch dev-image.tar
-          make -d build-dist
+        run: make build-dist
       
       # - name: Cache The Dev Image
       #   if: steps.cache.outputs.cache-hit != 'true'
