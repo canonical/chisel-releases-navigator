@@ -70,7 +70,7 @@ const Index = () => (
                 <div className="col-12">
                     <p className="u-no-max-width">
                         The Chisel Releases Navigator helps to explore and analyze the contents of&nbsp;
-                        <a href="https://www.github.com/canonical/chisel-releases" target="_blank" rel="noreferrer">chisel-releases</a> repo.
+                        <a className="text-link" href="https://www.github.com/canonical/chisel-releases" target="_blank" rel="noreferrer">chisel-releases</a> repo.
                         It provides an interactive table view of the release slices, along with filtering and searching.
 
                     </p>

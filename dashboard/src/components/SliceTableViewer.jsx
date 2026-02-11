@@ -106,29 +106,26 @@ const SliceTableViewer = ({
             tooltipParts.push("", description);
         }
         if (notes.length) {
-            tooltipParts.push("", ...notes.map(n => `- ${n.note}`));
+            tooltipParts.push("", "notes:", ...notes.map(n => `- ${n.note}`));
         }
         const tooltipMessage = tooltipParts.join("\n");
-        var color = "#FFF";
-
+        let cellClass = "slice-cell";
         if (slice) {
             if (!hasVersion) {
-                color = "#FAD54C";
+                cellClass += " slice-cell--missing";
             } else if (slice.notes.length) {
-                color = "#60a2a9";
+                cellClass += " slice-cell--notes";
             } else {
-                color = "#60A982";
+                cellClass += " slice-cell--ok";
             }
+        } else {
+            cellClass += " slice-cell--empty";
         }
-
-        const cellStyle = {
-            backgroundColor: color,
-        };
 
         // If no slice, render as a non-clickable div
         if (!slice) {
             return (
-                <div key={index} className="slice-cell" style={cellStyle}>
+                <div key={index} className={cellClass}>
                     <div className={`slice-cell__content${hasVersion ? "" : " slice-cell__content--center"}`}>
                         <span className={`slice-cell__label${hasVersion ? "" : " slice-cell__label--center"}`}>{label}</span>
                     </div>
@@ -140,12 +137,8 @@ const SliceTableViewer = ({
         const cellContent = (
             <a key={index}
                 href={`https://github.com/canonical/chisel-releases/blob/${branch}/slices/${name}.yaml`}
-                className="slice-cell"
+                className={`${cellClass} slice-cell--link`}
                 aria-label={tooltipMessage || undefined}
-                style={{
-                    ...cellStyle,
-                    cursor: "pointer",
-                }}
             >
                 <div className={`slice-cell__content${hasVersion ? "" : " slice-cell__content--center"}`}>
                     <span className={`slice-cell__label${hasVersion ? "" : " slice-cell__label--center"}`}>{label}</span>
@@ -493,7 +486,7 @@ const SliceTableViewer = ({
                         {resultState.htmlHeading}
                     </div>
                     {resultState.htmlRows}
-                    <div className="row text-center">
+                    <div className="row text-center show-all-row">
                         <button
                             className="p-button"
                             onClick={() => {
