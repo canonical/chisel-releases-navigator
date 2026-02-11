@@ -62,7 +62,8 @@ module.exports = (env, argv) => {
         new CopyWebpackPlugin({
             patterns: [
                 { from: './index.db.br', to: 'index.db.br' },
-                { from: './node_modules/sql.js/dist/sql-wasm.wasm', to: 'sql-wasm.wasm' }
+                { from: './node_modules/sql.js/dist/sql-wasm.wasm', to: 'sql-wasm.wasm' },
+                { from: './public/favicon-32x32.png', to: 'favicon-32x32.png' }
             ]
         }),
     ],
