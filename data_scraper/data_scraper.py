@@ -31,7 +31,7 @@ import yaml
 from filelock import FileLock
 
 # spellchecker: ignore Marcin Konowalczyk lczyk
-__VERSION__ = "0.3.0"
+__VERSION__ = "0.4.0"
 __AUTHOR___ = "Marcin Konowalczyk @lczyk"
 
 CHISEL_RELEASES_URL = os.environ.get("CHISEL_RELEASES_URL", "https://github.com/canonical/chisel-releases")
@@ -432,6 +432,8 @@ class Package:
     release: UbuntuRelease
     component: Component
     repo: Repo
+    description: str
+    section: str
 
     @classmethod
     def from_content_hunk(
@@ -443,23 +445,36 @@ class Package:
     ) -> Package | None:
         """Parse a package from a hunk of the Packages file content.
         Return None if the hunk is not a valid package entry."""
-        name_match = ""
-        version_match = ""
+        name, version, description, section = None, None, None, None
         for line in hunk.splitlines():
-            if line.startswith("Package:"):
-                name_match = line.split(":", 1)[1].strip()
-            elif line.startswith("Version:"):
-                version_match = line.split(":", 1)[1].strip()
+            parts = line.split(":", 1)
+            if len(parts) != 2:
+                continue
+            parts = [p.strip() for p in parts]
+            key, value = parts
+            if key == "Package":
+                name = value
+            elif key == "Version":
+                version = value
+            elif key == "Description":
+                description = value
+            elif key == "Section":
+                section = value
 
-        if not name_match or not version_match:
+        if not name or not version or not description or not section:
             return None
 
+        # trim <component>/ prefix from section if present, e.g. universe/net -> net
+        section = section.removeprefix(component + "/")
+
         return cls(
-            name=name_match,
-            version=version_match,
+            name=name,
+            version=version,
             release=release,
             component=component,
             repo=repo,
+            description=description,
+            section=section,
         )
 
 
@@ -495,22 +510,14 @@ def _get_packages(
                     break
             if attempt < 3:
                 logging.warning(
-                    "Non-200 response for %s (status %d), retrying (%d/3).",
-                    package_url,
-                    response.status_code,
-                    attempt,
+                    "Non-200 response for %s (status %d), retrying (%d/3).", package_url, response.status_code, attempt
                 )
             else:
                 break
         except requests.RequestException as exc:
             last_error = exc
             if attempt < 3:
-                logging.warning(
-                    "Request for %s failed (%d/3): %s",
-                    package_url,
-                    attempt,
-                    exc,
-                )
+                logging.warning("Request for %s failed (%d/3): %s", package_url, attempt, exc)
             else:
                 break
 
@@ -528,6 +535,8 @@ def _get_packages(
     split_content = content.split("\n\n")
     packages = set()
     for pkg_str in split_content:
+        if "Package:" not in pkg_str:
+            continue
         package = Package.from_content_hunk(pkg_str, release, component, repo)
         if package:
             packages.add(package)
@@ -671,6 +680,9 @@ def init_db(conn: sqlite3.Connection) -> None:
             branch TEXT NOT NULL,
             package TEXT NOT NULL,
             version TEXT,
+            component TEXT,
+            repo TEXT,
+            section TEXT,
             definition TEXT NOT NULL,
             notes TEXT DEFAULT '[]'
         )
@@ -692,6 +704,15 @@ def init_db(conn: sqlite3.Connection) -> None:
 
     conn.execute(
         """
+        CREATE TABLE description (
+            package TEXT NOT NULL UNIQUE,
+            description TEXT NOT NULL
+        )
+        """
+    )
+
+    conn.execute(
+        """
         CREATE TABLE meta (
             key TEXT NOT NULL UNIQUE,
             value TEXT
@@ -702,18 +723,22 @@ def init_db(conn: sqlite3.Connection) -> None:
 
 def insert_into_slice(
     conn: sqlite3.Connection,
+    *,
     branch: str,
     package: str,
     version: str | None,
+    component: str | None,
+    repo: str | None,
+    section: str | None,
     definition: str,
     notes: str,
 ) -> None:
     conn.execute(
         """
-        INSERT INTO slice (branch, package, version, definition, notes)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO slice (branch, package, version, component, repo, section, definition, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (branch, package, version, definition, notes),
+        (branch, package, version, component, repo, section, definition, notes),
     )
 
 
@@ -732,6 +757,14 @@ def insert_into_release(
         (branch_name, release.version, release.codename, release.lts, release.supported, release.devel),
     )
 
+def insert_into_description(conn: sqlite3.Connection, package: str, description: str) -> None:
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO description (package, description)
+        VALUES (?, ?)
+        """,
+        (package, description),
+    )
 
 def insert_into_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
     conn.execute(
@@ -814,27 +847,41 @@ def _write_db(
                     )
                     continue
 
-                for package_name, slice_text in slices.items():
+                for package, slice_text in slices.items():
                     slice_json = yaml.safe_load(slice_text)
                     slice_json_str = json.dumps(slice_json)
-                    notes_json_str = json.dumps(notes_for_release.get(package_name, []))
+                    notes_json_str = json.dumps(notes_for_release.get(package, []))
 
-                    # Get the version of the package
-                    package_version: str | None = None
-                    package_info = packages_for_release.get(package_name)
-                    if package_info is None:
-                        logging.warning("No package info found for package '%s' in release %s.", package_name, release)
+                    # get package info if available
+                    version: str | None = None
+                    description: str | None = None
+                    component: str | None = None
+                    repo: str | None = None
+                    section: str | None = None
+                    info = packages_for_release.get(package)
+                    if info is None:
+                        logging.warning("No package info found for package '%s' in release %s.", package, release)
                     else:
-                        package_version = package_info.version
+                        version = info.version
+                        description = info.description
+                        component = info.component
+                        repo = info.repo
+                        section = info.section
 
                     insert_into_slice(
                         conn,
-                        release.branch_name,
-                        package_name,
-                        package_version,
-                        slice_json_str,
-                        notes_json_str,
+                        branch=release.branch_name,
+                        package=package,
+                        version=version,
+                        component=component,
+                        repo=repo,
+                        section=section,
+                        definition=slice_json_str,
+                        notes=notes_json_str,
                     )
+
+                    if description:
+                        insert_into_description(conn, package, description)
 
             # Insert releases
             for release in slices_by_release:
@@ -845,7 +892,9 @@ def _write_db(
                 if release not in slices_by_release:
                     insert_into_release(conn, release, set_branch_to_null=True)
 
+            # Insert metadata
             insert_into_meta(conn, "last_update", datetime.now().isoformat())
+            insert_into_meta(conn, "chisel_releases_url", CHISEL_RELEASES_URL)
 
     logging.info(
         "Finished writing data to database in %.2f seconds.",
