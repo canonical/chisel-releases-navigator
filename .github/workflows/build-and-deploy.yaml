@@ -35,15 +35,12 @@ jobs:
       - name: Install distro-info
         run: |
           sudo apt-get update
-          # force reinstall to ensure we have the latest version
           sudo apt-get install --reinstall --yes distro-info distro-info-data
 
       - name: Build Dashboard
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          distro-info --all --fullname
-          make build-dist
+        run: make build-dist
       
       # - name: Cache The Dev Image
       #   if: steps.cache.outputs.cache-hit != 'true'
