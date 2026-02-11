@@ -93,14 +93,20 @@ const SliceTableViewer = ({
         const fullVersion = slice ? normalizeVersion(slice.version) : "";
         const label = slice ? (hasVersion ? shortenVersionForLabel(fullVersion) : "!") : "";
         const notes = slice ? slice.notes : [];
+        const component = slice?.component || "";
+        const repo = slice?.repo ? `, ${slice.repo}` : "";
+        const section = slice?.section || "";
+        const description = slice?.description || "";
         const tooltipParts = slice ? [
-            `${name}@${branch} (<component>/<repo>)`,
+            `${name} @ ${branch}`,
+            `${component}/${section}${repo}`,
             `${fullVersion}`,
-            "",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
         ] : [];
+        if (description) {
+            tooltipParts.push("", description);
+        }
         if (notes.length) {
-            tooltipParts.push("", "Notes:", ...notes.map(n => `- ${n.note}`));
+            tooltipParts.push("", ...notes.map(n => `- ${n.note}`));
         }
         const tooltipMessage = tooltipParts.join("\n");
         var color = "#FFF";
@@ -176,7 +182,7 @@ const SliceTableViewer = ({
 
 
 
-    const select = "package, branch, definition, notes, version";
+    const select = "slice.package, slice.branch, slice.definition, slice.notes, slice.version, description.description, slice.component, slice.repo, slice.section";
 
     const initResult = queryResult => {
 
@@ -192,7 +198,17 @@ const SliceTableViewer = ({
             [pkg, ...releases.map(rel => {
                 const row = queryResult.values.find(row => row[0] === pkg && row[1] === rel);
                 try {
-                    return row ? { definition: JSON.parse(row[2]), notes: JSON.parse(row[3]), version: row[4] } : null; // Return object with columns 2-4
+                    return row
+                        ? {
+                              definition: JSON.parse(row[2]),
+                              notes: JSON.parse(row[3]),
+                              version: row[4],
+                              description: row[5],
+                              component: row[6],
+                              repo: row[7],
+                              section: row[8],
+                          }
+                        : null; // Return object with columns 2-8
                 } catch (e) {
                     return null;
                 }
@@ -267,9 +283,10 @@ const SliceTableViewer = ({
         }
     };
 
-    const createQueryTemplate = (table, select, order) => `
+        const createQueryTemplate = (table, select, order) => `
             SELECT ${select}
             FROM ${table}
+            LEFT JOIN description ON description.package = slice.package
             WHERE
             search(JSON_OBJECT(${Object.keys(searchColumns).map(key => `'${key}', ${searchColumns[key].column}`).join(", ")}))
             ORDER BY
@@ -472,7 +489,7 @@ const SliceTableViewer = ({
                 resultState.altState
             ) : (
                 <>
-                    <div>
+                    <div className="release-header-row">
                         {resultState.htmlHeading}
                     </div>
                     {resultState.htmlRows}

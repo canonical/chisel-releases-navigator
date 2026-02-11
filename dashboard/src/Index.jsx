@@ -28,8 +28,8 @@ const viewTable = "slice";
 const categories = {};
 
 const orderByConfig = [
-    { name: "Name A-Z", value: "package ASC" },
-    { name: "Name Z-A", value: "package DESC" },
+    { name: "Name A-Z", value: "slice.package ASC" },
+    { name: "Name Z-A", value: "slice.package DESC" },
 ]
 
 
