@@ -45,7 +45,7 @@
   --app-border: #dddddd;
   --app-panel: #f7f7f7;
   --notch-color: #262626;
-  --slice-empty: #ffffff;
+  --slice-empty: transparent;
   --slice-ok: #60A982;
   --slice-notes: #60a2a9;
   --slice-missing: #FAD54C;
@@ -58,7 +58,7 @@
   --app-border: #3a3a3a;
   --app-panel: #1f1f1f;
   --notch-color: #d8d8d8;
-  --slice-empty: #1f1f1f;
+  --slice-empty: transparent;
   --slice-ok: #2b7a64;
   --slice-notes: #2c6a6f;
   --slice-missing: #b58a1f;
@@ -230,7 +230,7 @@ a {
   display: inline-block;
   border-right: 2px solid var(--app-border);
   color: rgba(0, 0, 0, 0.5);
-  background-color: var(--slice-empty);
+  background-color: transparent;
 }
 
 [data-theme="dark"] .slice-cell {
