@@ -33,7 +33,10 @@ jobs:
         uses: astral-sh/setup-uv@v7
       
       - name: Install distro-info
-        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends distro-info
+        run: |
+          sudo apt-get update
+          # force reinstall to ensure we have the latest version
+          sudo apt-get install --reinstall --yes distro-info
 
       - name: Build Dashboard
         # env:
