@@ -99,6 +99,7 @@ class UbuntuRelease:
         version = branch.split("-", 1)[1]
         release = _VERSION_TO_RELEASE.get(version)
         if release is None:
+            print(_VERSION_TO_RELEASE)
             raise ValueError(f"Unknown Ubuntu version '{version}' for branch '{branch}'")
         return release
 
