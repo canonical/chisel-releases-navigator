@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt-get update
           # force reinstall to ensure we have the latest version
-          sudo apt-get install --reinstall --yes distro-info
+          sudo apt-get install --reinstall --yes distro-info distro-info-data
 
       - name: Build Dashboard
         # env:
