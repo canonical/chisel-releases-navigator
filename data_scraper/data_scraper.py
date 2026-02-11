@@ -125,6 +125,16 @@ _VERSION_TO_RELEASE: dict[str, UbuntuRelease] = {}
 
 
 def init_distro_info() -> None:
+    # check that distro-info is available
+    try:
+        sub.run(["distro-info", "--help"], check=True, stdout=sub.DEVNULL, stderr=sub.DEVNULL)
+    except (sub.CalledProcessError, FileNotFoundError) as e:
+        logging.critical(
+            "distro-info command is required but not found or not working. "
+            "Install the 'distro-info' package and make sure it is working correctly."
+        )
+        raise RuntimeError("distro-info command is required but not found or not working") from e
+
     all_output = sub.getoutput("distro-info --all --fullname").strip()
     supported_output = sub.getoutput("distro-info --supported --fullname").strip()
     devel_output = sub.getoutput("distro-info --devel --fullname").strip()
@@ -144,7 +154,6 @@ def init_distro_info() -> None:
         _ALL_RELEASES.add(release)
 
     _VERSION_TO_RELEASE = {release.version: release for release in _ALL_RELEASES}
-    _VERSION_TO_CODENAME = {release.version: release.codename for release in _ALL_RELEASES}
 
 
 ################################################################################
