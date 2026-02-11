@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  PAGE_URL: https://animated-adventure-8j6kyqy.pages.github.io/
+  PAGE_URL: https://canonical.github.io/chisel-releases-navigator/
 
 jobs:
   build:
