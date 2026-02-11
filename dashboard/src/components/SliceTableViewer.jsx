@@ -331,11 +331,12 @@ const SliceTableViewer = ({
         if (db) // skip this step if we already have our db loaded
             return;
 
+        const assetUrl = (file) => new URL(file, window.location.href).toString();
         const SQL = await initSqlJs({
-            locateFile: (file) => `/sql-wasm.wasm`,
+            locateFile: (file) => assetUrl("sql-wasm.wasm"),
         });
 
-        const response = await fetch('/index.db.br');
+        const response = await fetch(assetUrl("index.db.br"));
         if (!response.ok) {
             throw new Error(`Failed to fetch database: ${response.statusText}`);
         }
