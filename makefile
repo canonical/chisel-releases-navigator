@@ -43,7 +43,7 @@ dashboard/dist: data_scraper/index.db.br
 	docker rm -f build-temp || true
 	docker run $(DOCKER_FLAGS) --name build-temp $(IMAGE) sleep inf &
 	sleep 2  # wait for container to start
-	docker exec build-temp webpack build
+	docker exec build-temp webpack build --mode production
 	docker cp build-temp:/dashboard/dist ./dashboard/dist
 	docker rm -f build-temp
 
