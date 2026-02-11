@@ -1,0 +1,85 @@
+[project]
+name = "data-scraper"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "brotli>=1.2.0",
+    "filelock>=3.20.3",
+    "pyyaml>=6.0.3",
+    "requests>=2.32.5",
+]
+
+[dependency-groups]
+dev = [
+    "colorlog>=6.10.1",
+    "joblib>=1.5.3",
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+    "ruff>=0.15.0",
+    "types-pyyaml>=6.0.12.20250915",
+    "types-requests>=2.32.4.20260107",
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+follow_imports = "normal"
+
+namespace_packages = true
+disallow_untyped_defs = true
+# disallow_any_unimported = true
+# disallow_any_generics = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+show_error_codes = true
+warn_unused_ignores = true
+warn_unused_configs = true
+explicit_package_bases = false
+# enable_error_code = "explicit-override"
+extra_checks = true
+local_partial_types = true
+
+
+files = [
+    "./**/*.py",
+    # "./example/**/*.py",
+    #
+]
+
+[tool.ruff]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    ".env",
+    ".eggs",
+    "*.egg",
+    ".tox",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".vscode",
+    "*-env",
+]
+line-length = 120
+lint.ignore = [
+    "PERF102",  # When using only the values of a dict use the `values()` method
+    "SIM102",  # Use a single `if` statement instead of nested `if` statements
+]
+lint.select = [
+    "E",    # pycodestyle
+    "F",    # Pyflakes
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "W",    # warnings
+    "I",    # isort
+    "Q",    # flake8-quotes
+    "RUF",  # ruff
+    "TID",  # flake8-tidy-imports
+    "PERF", # perflint
+    "FURB", # refurb
+    #
+]
+
+output-format = "concise"

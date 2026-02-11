@@ -41,8 +41,10 @@ const SliceTableViewer = ({
 }) => {
 
 
-    const tab_list = Object.keys(categories);
-    const [category, _setCategory] = useState(getQueryObject("c", tab_list[0]));
+    const [categoriesState, setCategoriesState] = useState(categories);
+    const tab_list = Object.keys(categoriesState);
+    const initialCategory = tab_list[0] ?? "All";
+    const [category, _setCategory] = useState(getQueryObject("c", initialCategory));
     // wrap certain states such that we can store and recover values from query string
     const setCategory = val => {
         setQueryObject("c", val)
@@ -60,6 +62,7 @@ const SliceTableViewer = ({
     }
     const [resultsStats, setResultsStats] = useState();
     const [dbStats, setDbStats] = useState({});
+    const [filterPanelDataState, setFilterPanelDataState] = useState(filterPanelData);
     // const [dbMeta, setDbMeta] = useState({});
 
     const resultReducer = (state, state_func) => {
@@ -68,55 +71,63 @@ const SliceTableViewer = ({
     }
 
     const formatReleaseHeader = (value, index) => (
-        <div className="u-text--muted u-text--small u-text--uppercase"
-            style={{
-                width: "4em", display: "inline-block", marginBottom: "1em",
-                writingMode: "vertical-lr", textOrientation: "mixed", transform: "rotate(-20deg)", transformOrigin: "top right"
-            }}>{value}</div>
+        <div className="u-text--muted u-text--small u-text--uppercase release-header">{value}</div>
     )
 
-    const crc16 = function (input) {
-        const data = new Uint8Array((typeof input === "string") ? [...input].map(c => c.charCodeAt(0)) : input);
-
-        var POLY = 0x8408, INIT = 0, XOROUT = 0;
-        for (var crc = INIT, i = 0; i < data.length; i++) {
-            crc = crc ^ data[i];
-            for (var j = 0; j < 8; j++) {
-                crc = crc & 1 ? crc >>> 1 ^ POLY : crc >>> 1;
-            }
+    const normalizeVersion = (version) => (version === null || version === undefined ? "null" : String(version));
+    const shortenVersionForLabel = (version) => {
+        var trimmed = version.split("ubuntu")[0];
+        trimmed = trimmed.split("build")[0];
+        trimmed = trimmed.split("-")[0];
+        trimmed = trimmed.split("+")[0];
+        trimmed = trimmed.split("~")[0];
+        // trim everything *before* the first colon, if it exists (to remove epoch)
+        if (trimmed.includes(":")) {
+            trimmed = trimmed.split(":").slice(1).join(":");
         }
-        return ((crc ^ XOROUT) >>> 0).toString(16).padStart(4, '0'); // Convert to hex and pad to 8 characters
-
-    };
-
+        return trimmed;        
+    }
 
     const formatSlice = (name, branch, slice, index) => {
-        const label = slice ? crc16(slice.raw_definition) : "";
-        var color = "#FFF";
-
-        if (slice) {
-            color = "#60A982";
-
-            if (slice.warnings.length) {
-                color = "#FAD54C";
-            }
+        const hasVersion = slice && slice.version !== null && slice.version !== undefined;
+        const fullVersion = slice ? normalizeVersion(slice.version) : "";
+        const label = slice ? (hasVersion ? shortenVersionForLabel(fullVersion) : "!") : "";
+        const notes = slice ? slice.notes : [];
+        const component = slice?.component || "";
+        const repo = slice?.repo ? `, ${slice.repo}` : "";
+        const section = slice?.section || "";
+        const description = slice?.description || "";
+        const tooltipParts = slice ? [
+            `${name} @ ${branch}`,
+            `${component}/${section}${repo}`,
+            `${fullVersion}`,
+        ] : [];
+        if (description) {
+            tooltipParts.push("", description);
         }
-
-        const cellStyle = {
-            backgroundColor: color,
-            width: "4em",
-            height: "1.5em",
-            display: "inline-block",
-            borderRight: "2px solid #ddd",
-            color: "#0008",
-        };
+        if (notes.length) {
+            tooltipParts.push("", "notes:", ...notes.map(n => `- ${n.note}`));
+        }
+        const tooltipMessage = tooltipParts.join("\n");
+        let cellClass = "slice-cell";
+        if (slice) {
+            if (!hasVersion) {
+                cellClass += " slice-cell--missing";
+            } else if (slice.notes.length) {
+                cellClass += " slice-cell--notes";
+            } else {
+                cellClass += " slice-cell--ok";
+            }
+        } else {
+            cellClass += " slice-cell--empty";
+        }
 
         // If no slice, render as a non-clickable div
         if (!slice) {
             return (
-                <div key={index} style={cellStyle}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
-                        <span>{label}</span>
+                <div key={index} className={cellClass}>
+                    <div className={`slice-cell__content${hasVersion ? "" : " slice-cell__content--center"}`}>
+                        <span className={`slice-cell__label${hasVersion ? "" : " slice-cell__label--center"}`}>{label}</span>
                     </div>
                 </div>
             );
@@ -126,61 +137,45 @@ const SliceTableViewer = ({
         const cellContent = (
             <a key={index}
                 href={`https://github.com/canonical/chisel-releases/blob/${branch}/slices/${name}.yaml`}
-                style={{
-                    ...cellStyle,
-                    cursor: "pointer",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.2)"}
-                onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
+                className={`${cellClass} slice-cell--link`}
+                aria-label={tooltipMessage || undefined}
             >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%", padding: "0 0.2em" }}>
-                    <span>{label}</span>
-                    {slice?.warnings.length ?
-                        (<i className="bi bi-exclamation-triangle status-icon" style={{ color: "#0008" }}></i>) : ""}
+                <div className={`slice-cell__content${hasVersion ? "" : " slice-cell__content--center"}`}>
+                    <span className={`slice-cell__label${hasVersion ? "" : " slice-cell__label--center"}`}>{label}</span>
                 </div>
+                {slice?.notes.length ? (
+                    <span
+                        aria-hidden="true"
+                        className="slice-cell__notch"
+                    />
+                ) : ""}
+                {tooltipMessage ? (
+                    <span className="slice-tooltip" aria-hidden="true">
+                        {tooltipMessage}
+                    </span>
+                ) : ""}
             </a>
         );
 
-        return slice?.warnings.length ? (
-            <Tooltip key={index} message={slice.warnings.map(w => "• " + w.warning).join("\n")}>
-                {cellContent}
-            </Tooltip>
-        ) : cellContent;
+        return cellContent;
     }
 
-    // slicesWarnings
+    // slicesNotes
     const formatPackageHeader = (value, index) => (
-        <div key={index}
-            style={{
-                width: "25%", float: "left", height: "1.5em", display: "inline-block"
-            }}
-            className="u-text--muted u-text--small u-text--uppercase" > {value}</div >
+        <div key={index} className="u-text--muted u-text--small u-text--uppercase package-header"> {value}</div >
     )
 
     const formatPackage = (value, index) => (
-        <div key={index}
-            style={{
-                width: "25%", 
-                float: "left", 
-                height: "1.5em", 
-                paddingRight: "0.3em",
-                borderRight: "2px solid #ddd",
-                display: "inline-block",
-            }}>
+        <div key={index} className="package-cell">
             <Tooltip message={value}>
-                <div style={{
-                    height: "1.5em",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                }}>{value}</div>
+                <div className="package-cell__text">{value}</div>
             </Tooltip>
         </div>
     )
 
 
 
-    const select = "package, branch, definition, raw_definition, warnings";
+    const select = "slice.package, slice.branch, slice.definition, slice.notes, slice.version, description.description, slice.component, slice.repo, slice.section";
 
     const initResult = queryResult => {
 
@@ -196,7 +191,17 @@ const SliceTableViewer = ({
             [pkg, ...releases.map(rel => {
                 const row = queryResult.values.find(row => row[0] === pkg && row[1] === rel);
                 try {
-                    return row ? { definition: JSON.parse(row[2]), raw_definition: row[3], warnings: JSON.parse(row[4]) } : null; // Return object with columns 2 and 3
+                    return row
+                        ? {
+                              definition: JSON.parse(row[2]),
+                              notes: JSON.parse(row[3]),
+                              version: row[4],
+                              description: row[5],
+                              component: row[6],
+                              repo: row[7],
+                              section: row[8],
+                          }
+                        : null; // Return object with columns 2-8
                 } catch (e) {
                     return null;
                 }
@@ -229,7 +234,7 @@ const SliceTableViewer = ({
             ...state,
             htmlRows: [state.htmlRows,
             ...rows.map((row, rowIndex) => (
-                <div key={rowIndex + state.htmlRows.length} style={{ display: "flex", flexWrap: "nowrap", borderBottom: "2px solid #ddd", }}>
+                <div key={rowIndex + state.htmlRows.length} className="slice-row">
                     {formatPackage(row[0], 0)}
                     {row.slice(1).map((value, colIndex) => formatSlice(row[0], state.columns[colIndex + 1], value, colIndex + 1))}
                 </div>
@@ -248,7 +253,7 @@ const SliceTableViewer = ({
             ...state,
             htmlRows: [state.htmlRows,
             ...rows.map((row, rowIndex) => (
-                <div key={rowIndex + state.htmlRows.length} style={{ display: "flex", flexWrap: "nowrap", borderBottom: "2px solid #ddd", }}>
+                <div key={rowIndex + state.htmlRows.length} className="slice-row">
                     {formatPackage(row[0], 0)}
                     {row.slice(1).map((value, colIndex) => formatSlice(row[0], state.columns[colIndex + 1], value, colIndex + 1))}
                 </div>
@@ -271,14 +276,53 @@ const SliceTableViewer = ({
         }
     };
 
-    const createQueryTemplate = (table, select, order) => `
+        const createQueryTemplate = (table, select, order) => `
             SELECT ${select}
             FROM ${table}
+            LEFT JOIN description ON description.package = slice.package
             WHERE
             search(JSON_OBJECT(${Object.keys(searchColumns).map(key => `'${key}', ${searchColumns[key].column}`).join(", ")}))
             ORDER BY
             ${order}
             `;
+
+    const buildFilterPanelData = (branches) => {
+        const branchPanel = {
+            chips: branches.map(branch => ({ lead: "branch", value: branch })),
+            heading: "Branch",
+            id: 0,
+        };
+        const restPanels = filterPanelData.map((panel, index) => ({
+            ...panel,
+            id: index + 1,
+        }));
+        return [branchPanel, ...restPanels];
+    };
+
+    const buildCategories = (releases) => {
+        const categoriesMap = {
+            "All": () => true,
+        };
+        const ltsBranches = releases
+            .filter(release => release.branch && release.lts)
+            .map(release => release.branch);
+        if (ltsBranches.length) {
+            categoriesMap["LTS"] = row => ltsBranches.includes(row.branch);
+        }
+        const supportedBranches = releases
+            .filter(release => release.branch && release.supported)
+            .map(release => release.branch);
+        if (supportedBranches.length) {
+            categoriesMap["Supported"] = row => supportedBranches.includes(row.branch);
+        }
+        const develBranches = releases
+            .filter(release => release.branch && release.devel)
+            .map(release => release.branch);
+        if (develBranches.length) {
+            categoriesMap["Development"] = row => develBranches.includes(row.branch);
+        }
+        return categoriesMap;
+    };
 
     const loadDb = async () => {
         // Careful with state in this async function, any state set
@@ -303,28 +347,40 @@ const SliceTableViewer = ({
         db = new SQL.Database(decompressedBuffer);
 
         // load meta data
-        let queryResult, _, imgCount, digestCount;
+        let queryResult, countsResult, branchesResult, releasesResult, _;
         [queryResult, _] = db.exec("SELECT * FROM meta");
 
         // TODO, modify query to just extract the date 
-        const meta = Object.fromEntries(queryResult.values.map(row => [row[1], row[2]]));
+        const meta = Object.fromEntries(queryResult.values.map(row => [row[0], row[1]]));
         // setDbMeta(meta);
         let date = new Date(meta.last_update);
 
 
-        // TODO: Complete these queries
-        // [queryResult, _] = db.exec("SELECT max(RowID) FROM repository");
-        // imgCount = queryResult.values[0];
-        imgCount = 0;
+        [countsResult, _] = db.exec(
+            "SELECT COUNT(*) AS slice_count, COUNT(DISTINCT package) AS package_count, COUNT(DISTINCT branch) AS release_count FROM slice"
+        );
+        const [sliceCount, packageCount, releaseCount] = countsResult?.values?.[0] ?? [0, 0, 0];
 
-        // [queryResult, _] = db.exec("SELECT max(RowID) FROM digest");
-        // digestCount = queryResult.values[0];
-        digestCount = 0;
+        [branchesResult, _] = db.exec("SELECT DISTINCT branch FROM slice ORDER BY branch DESC");
+        const branches = branchesResult?.values?.map(row => row[0]) ?? [];
+        setFilterPanelDataState(buildFilterPanelData(branches));
+
+        [releasesResult, _] = db.exec(
+            "SELECT branch, lts, supported, devel FROM release WHERE branch IS NOT NULL"
+        );
+        const releases = releasesResult?.values?.map(row => ({
+            branch: row[0],
+            lts: Boolean(row[1]),
+            supported: Boolean(row[2]),
+            devel: Boolean(row[3]),
+        })) ?? [];
+        setCategoriesState(buildCategories(releases));
 
         setDbStats({
             "Updated": date.toLocaleString(),
-            "Images": imgCount,
-            "Digests": digestCount
+            "Packages": packageCount,
+            "Slice Definition Files": sliceCount,
+            "Ubuntu Releases": releaseCount
         });
     }
 
@@ -345,7 +401,7 @@ const SliceTableViewer = ({
                     return acc;
                 }, {});
 
-        const categoryFilter = categories[category];
+        const categoryFilter = categoriesState[category] ?? (() => true);
         const search = generateSearchFunction(keywordArray, groupedData, categoryFilter);
         db.create_function("search", search);
         const query = createQueryTemplate(viewTable, select, order);
@@ -370,6 +426,15 @@ const SliceTableViewer = ({
         });
     }, [category, searchTerm, orderBy]);
 
+    useEffect(() => {
+        if (!categoriesState[category]) {
+            const nextCategory = Object.keys(categoriesState)[0];
+            if (nextCategory) {
+                setCategory(nextCategory);
+            }
+        }
+    }, [categoriesState, category]);
+
     return (
         <div>
 
@@ -378,7 +443,7 @@ const SliceTableViewer = ({
 
                     <SearchAndFilter
                         existingSearchData={searchTerm}
-                        filterPanelData={filterPanelData}
+                        filterPanelData={filterPanelDataState}
                         returnSearchData={setSearchTerm}
                     />
 
@@ -417,11 +482,11 @@ const SliceTableViewer = ({
                 resultState.altState
             ) : (
                 <>
-                    <div>
+                    <div className="release-header-row">
                         {resultState.htmlHeading}
                     </div>
                     {resultState.htmlRows}
-                    <div className="row text-center">
+                    <div className="row text-center show-all-row">
                         <button
                             className="p-button"
                             onClick={() => {

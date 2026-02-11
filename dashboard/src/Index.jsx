@@ -7,32 +7,17 @@ import Page from "./Page";
 const filterPanelData = [
     {
         chips: [
-            { lead: 'branch', value: 'ubuntu-26.04' },
-            { lead: 'branch', value: 'ubuntu-25.10' },
-            { lead: 'branch', value: 'ubuntu-25.04' },
-            { lead: 'branch', value: 'ubuntu-24.10' },
-            { lead: 'branch', value: 'ubuntu-24.04' },
-            { lead: 'branch', value: 'ubuntu-23.10' },
-            { lead: 'branch', value: 'ubuntu-23.04' },
-            { lead: 'branch', value: 'ubuntu-22.10' },
-            { lead: 'branch', value: 'ubuntu-22.04' },
-            { lead: 'branch', value: 'ubuntu-20.04' },
+            { lead: 'notes', value: true },
+            { lead: 'notes', value: "double glob" },
+            { lead: 'notes', value: "architecture comments" },
+            { lead: 'notes', value: "large comments" },
+            { lead: 'notes', value: "fixed minor versions" },
+            { lead: 'notes', value: "missing copyright" },
+            { lead: 'notes', value: "unsorted content" },
+            { lead: 'version', value: "missing" }
         ],
-        heading: 'Release',
+        heading: 'Notes',
         id: 0
-    },
-    {
-        chips: [
-            { lead: 'warnings', value: true },
-            { lead: 'warnings', value: "double glob" },
-            { lead: 'warnings', value: "architecture comments" },
-            { lead: 'warnings', value: "large comments" },
-            { lead: 'warnings', value: "fixed minor versions" },
-            { lead: 'warnings', value: "missing copyright" },
-            { lead: 'warnings', value: "unsorted content" }
-        ],
-        heading: 'Warnings',
-        id: 1
     }
 ];
 
@@ -40,39 +25,37 @@ const contextMenuLinks = [];
 
 const viewTable = "slice";
 
-const categories = {
-    "All": (row) => true,
-    "LTS": (row) => ["ubuntu-26.04", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
-    "Active Release": (row) => ["ubuntu-26.04", "ubuntu-25.10", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"].includes(row.branch),
-};
-
+const categories = {};
 
 const orderByConfig = [
-    { name: "Name A-Z", value: "package ASC" },
-    { name: "Name Z-A", value: "package DESC" },
+    { name: "Name A-Z", value: "slice.package ASC" },
+    { name: "Name Z-A", value: "slice.package DESC" },
 ]
 
 
 const searchColumns = {
     "branch": { column: "slice.branch" },
     "package": { column: "slice.package" },
-    "warnings": { column: "slice.warnings" },
-    // "type": { column: "slice.type" }
+    "notes": { column: "slice.notes" },
+    "version": { column: "slice.version" },
 };
 
 const searchLogic = (row, keywordArray, groupedData) => {
 
-    const searchText = `${row.branch} ${row.package} ${row.type}`.toLowerCase(); // TODO: move to row in default view
+    const searchText = `${row.branch} ${row.package}`.toLowerCase(); // TODO: move to row in default view
     const keywordFound = keywordArray.every(keyword => searchText.includes(keyword.toLowerCase()));
-    const branchFound = groupedData.branch ? groupedData.branch.some ^ (filter => row.branch == filter) : true;
-    const typeFound = groupedData.type ? groupedData.type.some(filter => row.type == filter) : true;
+    const branchFound = groupedData.branch ? groupedData.branch.some(filter => row.branch == filter) : true;
 
-    // This is ugly fix it later, if the warning string has more than 2 characters there is at least one item
-    const warningsFound = groupedData.warnings ? groupedData.warnings.some(
-        filter => (row.warnings.length > 2) && filter
+    // This is ugly fix it later, if the note string has more than 2 characters there is at least one item
+    const notesFound = groupedData.notes ? groupedData.notes.some(
+        filter => (row.notes.length > 2) && filter
     ) : true;
 
-    return keywordFound && branchFound && typeFound && warningsFound;
+    const versionFound = groupedData.version ? groupedData.version.some(
+        filter => (filter === "missing" ? row.version === null || row.version === undefined : row.version === filter)
+    ) : true;
+
+    return keywordFound && branchFound && notesFound && versionFound;
 
 };
 
@@ -86,8 +69,8 @@ const Index = () => (
                 </div>
                 <div className="col-12">
                     <p className="u-no-max-width">
-                        The Chisel Releases Navigator helps to explore and analyze the contents of 
-                        <a href="https://www.github.com/canonical/chisel-releases" target="_blank" rel="noreferrer">chisel-releases</a> repo.
+                        The Chisel Releases Navigator helps to explore and analyze the contents of&nbsp;
+                        <a className="text-link" href="https://www.github.com/canonical/chisel-releases" target="_blank" rel="noreferrer">chisel-releases</a> repo.
                         It provides an interactive table view of the release slices, along with filtering and searching.
 
                     </p>

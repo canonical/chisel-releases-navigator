@@ -1,0 +1,12 @@
+*.db
+*.db.br
+*.db-journal
+
+.venv
+*.pyc
+__pycache__/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+.memory/

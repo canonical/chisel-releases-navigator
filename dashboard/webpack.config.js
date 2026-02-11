@@ -4,17 +4,19 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
 
 
-module.exports = {
-    // mode: 'production',
-    mode: 'development',
+module.exports = (env, argv) => {
+    const isProd = argv.mode === "production";
+    return {
+    mode: isProd ? "production" : "development",
     entry: {
         index: "./src/Index.jsx",
     },
-    // optimization: {
-    //     chunkIds: 'total-size',
-    //     minimize: true,
-    //     minimizer: [new TerserPlugin()],
-    // },
+    optimization: isProd
+        ? {
+              minimize: true,
+              minimizer: [new TerserPlugin()],
+          }
+        : undefined,
 
     // stats: {
     //     warnings: false,  // Disable warnings
@@ -60,7 +62,8 @@ module.exports = {
         new CopyWebpackPlugin({
             patterns: [
                 { from: './index.db.br', to: 'index.db.br' },
-                { from: './node_modules/sql.js/dist/sql-wasm.wasm', to: 'sql-wasm.wasm' }
+                { from: './node_modules/sql.js/dist/sql-wasm.wasm', to: 'sql-wasm.wasm' },
+                { from: './public/favicon-32x32.png', to: 'favicon-32x32.png' }
             ]
         }),
     ],
@@ -68,4 +71,5 @@ module.exports = {
         static: path.resolve(__dirname, "dist"),
         port: 3000,
     },
+    };
 };
