@@ -38,7 +38,9 @@ jobs:
       - name: Build Dashboard
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make build-dist
+        run: |
+          distro-info --all --fullname
+          make build-dist
       
       # - name: Cache The Dev Image
       #   if: steps.cache.outputs.cache-hit != 'true'
