@@ -868,6 +868,9 @@ def _write_db(
                         repo = info.repo
                         section = info.section
 
+                    # coerce empty strings to null
+                    repo = repo if repo else None
+
                     insert_into_slice(
                         conn,
                         branch=release.branch_name,
