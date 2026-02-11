@@ -7,8 +7,9 @@ on:
   pull_request:
     branches:
       - main
-  # schedule:
-  #   - cron: '0 0,6,12,18 * * *'
+  # run at 00:00, 06:00, 12:00 and 18:00 every day
+  schedule:
+    - cron: '0 0,6,12,18 * * *'
   workflow_dispatch:
 
 env:
@@ -21,6 +22,8 @@ jobs:
     steps:
       - name: Checkout Dashboard Repository
         uses: actions/checkout@v6
+
+      # TODO: reenable caching of the image
 
       # - name: Restore The Dev Image
       #   id: cache
@@ -55,7 +58,6 @@ jobs:
           name: dashboard-dist
           path: dashboard/dist
 
-  # Single deploy job since we're just deploying
   deploy:
     name: deploy
     needs: build
