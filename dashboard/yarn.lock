@@ -3992,11 +3992,6 @@ run-parallel@^1.1.9:
   dependencies:
     queue-microtask "^1.2.2"
 
-saas@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/saas/-/saas-1.0.0.tgz#0091274f26664300bbca5e9893bc4bb88709e677"
-  integrity sha512-FgayhFS18BlPfcyMcOqxD7PIyNyUjqyv8R+rsr3X2KRK2icEUL4uvWBF+lZ0IPqJIO2kUO0d20OXY+R+pdriqg==
-
 safe-buffer@5.2.1, safe-buffer@>=5.1.0, safe-buffer@^5.1.0, safe-buffer@~5.2.0:
   version "5.2.1"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.2.1.tgz#1eaf9fa9bdb1fdd4ec75f58f9cdb4e6b7827eec6"
@@ -4512,10 +4507,10 @@ uuid@^8.3.2:
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
-vanilla-framework@4.11.0:
-  version "4.11.0"
-  resolved "https://registry.yarnpkg.com/vanilla-framework/-/vanilla-framework-4.11.0.tgz#81636d58bacbd3320a4eb6bf5bef00409cfdc008"
-  integrity sha512-S0AAHNVphn3YJ7BQhyHmvKhrqiZcncQBPedwMan18uavB4VfAT8UN0dwgrHQvY/ypUuJiq/GPA0Xe1xcd+E7dg==
+vanilla-framework@4.44.0:
+  version "4.44.0"
+  resolved "https://registry.yarnpkg.com/vanilla-framework/-/vanilla-framework-4.44.0.tgz#0e8c495207b7abdadd6764258712b48f37964134"
+  integrity sha512-+TKWpSsWDMbbO/pUTEImeDOhe2pIztx/lseg79vIoVbnluxJ8u2+EbE8A1q4MrGMGjQcpTVwXoudJEgIkdMHTw==
 
 vary@~1.1.2:
   version "1.1.2"
