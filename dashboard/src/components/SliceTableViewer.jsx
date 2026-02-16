@@ -162,7 +162,7 @@ const SliceTableViewer = ({
 
     // slicesNotes
     const formatPackageHeader = (value, index) => (
-        <div key={index} className="u-text--muted u-text--small u-text--uppercase package-header"> {value}</div >
+        <div key={index} className="u-text--muted u-text--small package-header"> {value}</div >
     )
 
     const formatPackage = (value, index) => (
@@ -208,7 +208,7 @@ const SliceTableViewer = ({
             })]
         );
 
-        let columns = ["Package", ...releases],
+        let columns = ["package", ...releases],
             values = matrix;
 
         return {
@@ -216,11 +216,7 @@ const SliceTableViewer = ({
             columns: columns,
             values: values,
             residual_rows: matrix,
-            htmlRows: [],
-            htmlHeading: [
-                formatPackageHeader(columns[0], 0),
-                ...columns.slice(1).map((key, keyIndex) => formatReleaseHeader(key, keyIndex + 1))
-            ]
+            loaded_rows: [],
         }
     }
 
@@ -232,14 +228,7 @@ const SliceTableViewer = ({
         let rows = state.residual_rows.splice(0, 100);
         return {
             ...state,
-            htmlRows: [state.htmlRows,
-            ...rows.map((row, rowIndex) => (
-                <div key={rowIndex + state.htmlRows.length} className="slice-row">
-                    {formatPackage(row[0], 0)}
-                    {row.slice(1).map((value, colIndex) => formatSlice(row[0], state.columns[colIndex + 1], value, colIndex + 1))}
-                </div>
-            ))
-            ]
+            loaded_rows: [...state.loaded_rows, ...rows]
         }
     }
 
@@ -251,14 +240,7 @@ const SliceTableViewer = ({
         let rows = state.residual_rows.splice(0, state.residual_rows.length);
         return {
             ...state,
-            htmlRows: [state.htmlRows,
-            ...rows.map((row, rowIndex) => (
-                <div key={rowIndex + state.htmlRows.length} className="slice-row">
-                    {formatPackage(row[0], 0)}
-                    {row.slice(1).map((value, colIndex) => formatSlice(row[0], state.columns[colIndex + 1], value, colIndex + 1))}
-                </div>
-            ))
-            ]
+            loaded_rows: [...state.loaded_rows, ...rows]
         }
     }
 
@@ -483,10 +465,30 @@ const SliceTableViewer = ({
                 resultState.altState
             ) : (
                 <>
-                    <div className="release-header-row">
-                        {resultState.htmlHeading}
+                    <div className="slice-grid" role="table" aria-label="Slice table">
+                        <div className="slice-column slice-column--package">
+                            <div className="slice-column__header" role="columnheader">
+                                {formatPackageHeader(resultState.columns[0], 0)}
+                            </div>
+                            {resultState.loaded_rows.map((row, rowIndex) => (
+                                <div key={`pkg-${rowIndex}`} className="slice-column__cell" role="cell">
+                                    {formatPackage(row[0], 0)}
+                                </div>
+                            ))}
+                        </div>
+                        {resultState.columns.slice(1).map((column, columnIndex) => (
+                            <div key={`col-${column}`} className="slice-column slice-column--release">
+                                <div className="slice-column__header" role="columnheader">
+                                    {formatReleaseHeader(column, columnIndex + 1)}
+                                </div>
+                                {resultState.loaded_rows.map((row, rowIndex) => (
+                                    <div key={`cell-${columnIndex}-${rowIndex}`} className="slice-column__cell" role="cell">
+                                        {formatSlice(row[0], resultState.columns[columnIndex + 1], row[columnIndex + 1], columnIndex + 1)}
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
                     </div>
-                    {resultState.htmlRows}
                     <div className="row text-center show-all-row">
                         <button
                             className="p-button"
