@@ -53,3 +53,4 @@ clean:  ## Clean up generated files
 	rm -f data_scraper/index.db.br
 	rm -rf dashboard/dist
 	rm -f dev-image.tar
+	docker rmi -f $(IMAGE) || true
