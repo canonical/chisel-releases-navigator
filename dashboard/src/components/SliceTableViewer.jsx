@@ -360,7 +360,7 @@ const SliceTableViewer = ({
         setCategoriesState(buildCategories(releases));
 
         setDbStats({
-            "Updated": date.toLocaleString(),
+            "Updated": date.toLocaleString("en-GB"),
             "Packages": packageCount,
             "Slice Definition Files": sliceCount,
             "Ubuntu Releases": releaseCount
