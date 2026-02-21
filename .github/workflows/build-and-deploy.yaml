@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       actions: read
+      contents: read
     steps:
       - name: Checkout Dashboard Repository
         uses: actions/checkout@v6
@@ -47,6 +48,7 @@ jobs:
         with:
           artifact_name: index.db.br
           output_path: ./data_scraper
+          token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
 
       - name: Verify index.db.br download
         run: ls -la ./data_scraper/index.db.br
