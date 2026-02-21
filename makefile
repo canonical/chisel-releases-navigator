@@ -14,9 +14,6 @@ help:  ## Show this help message
 .PHONY: build-dist
 build-dist: dashboard/dist  ## Build the production distribution
 
-data_scraper/index.db.br: data_scraper/data_scraper.py
-	uv --directory data_scraper run data_scraper.py -j-1 --force --compress index.db
-
 .PHONY: build-image
 build-image: Dockerfile $(shell find dashboard/src -type f)  ## Build the development Docker image
 	docker build -t $(IMAGE) -f $< .

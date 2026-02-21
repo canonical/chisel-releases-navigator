@@ -19,6 +19,8 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-24.04
+    permissions:
+      actions: read
     steps:
       - name: Checkout Dashboard Repository
         uses: actions/checkout@v6
@@ -39,6 +41,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --reinstall --yes distro-info distro-info-data
+
+      - name: Download latest index.db.br
+        uses: canonical/chisel-releases-data@main
+        with:
+          artifact_name: index.db.br
+          output_path: ./data_scraper
+
+      - name: Verify index.db.br download
+        run: ls -la ./data_scraper/index.db.br
 
       - name: Build Dashboard
         # env:
