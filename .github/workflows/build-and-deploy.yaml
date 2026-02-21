@@ -33,7 +33,7 @@ jobs:
           repository: canonical/chisel-releases-data
           path: actions/chisel-releases-data
           token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
-          sparse-checkout: action.yaml
+          sparse-checkout: action.yml
           sparse-checkout-cone-mode: false
 
       - name: Debug ls
