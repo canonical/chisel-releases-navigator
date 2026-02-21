@@ -43,18 +43,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install --reinstall --yes distro-info distro-info-data
 
-      - name: Checkout chisel-releases-data
+      # https://github.com/actions/checkout/tree/v6/?tab=readme-ov-file#fetch-only-a-single-file
+      - name: Checkout the chisel-releases-data action
         uses: actions/checkout@v6
         with:
           repository: canonical/chisel-releases-data
           path: actions/chisel-releases-data
           token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
+          sparse-checkout: action.yaml
+          sparse-checkout-cone-mode: false
 
       - name: Download latest index.db.br
         uses: ./actions/chisel-releases-data
         with:
           artifact_name: index.db.br
           output_path: ./data_scraper
+          token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
 
       - name: Verify index.db.br download
         run: ls -la ./data_scraper/index.db.br
