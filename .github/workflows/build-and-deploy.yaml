@@ -58,7 +58,7 @@ jobs:
         uses: ./actions/chisel-releases-data/download
         with:
           artifact_name: index.db.br
-          output_path: ./data_scraper
+          output_path: ./data
           token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
 
       - name: Build Dashboard

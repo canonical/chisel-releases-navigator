@@ -3,7 +3,7 @@
 SHELL := /usr/bin/bash
 
 DOCKER_FLAGS := --rm --user ubuntu:ubuntu --publish 3000:3000 \
-	--volume ./data_scraper/index.db.br:/dashboard/index.db.br
+	--volume ./data/index.db.br:/dashboard/index.db.br
 
 IMAGE=dev-image
 
@@ -35,7 +35,7 @@ serve:  ## Run the development server
 	if [ -z "$(IMAGE_PATH)" ]; then $(MAKE) build-image; else docker load --input $(IMAGE_PATH); fi
 	docker run $(DOCKER_FLAGS) $(IMAGE) webpack serve --no-client-overlay --mode production
 
-dashboard/dist: data_scraper/index.db.br
+dashboard/dist: data/index.db.br
 	if [ -z "$(IMAGE_PATH)" ]; then $(MAKE) build-image; else docker load --input $(IMAGE_PATH); fi
 	docker rm -f build-temp || true
 	docker run $(DOCKER_FLAGS) --name build-temp $(IMAGE) sleep inf &
@@ -46,8 +46,7 @@ dashboard/dist: data_scraper/index.db.br
 
 .PHONY: clean
 clean:  ## Clean up generated files
-	rm -f data_scraper/index.db
-	rm -f data_scraper/index.db.br
+	rm -f data/index.db.br
 	rm -rf dashboard/dist
 	rm -f dev-image.tar
 	docker rmi -f $(IMAGE) || true
