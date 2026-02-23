@@ -60,7 +60,6 @@ jobs:
           artifact_name: index.db.br
           output_path: ./data_scraper
           token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
-          debug: true
 
       - name: Build Dashboard
         # env:
