@@ -33,7 +33,7 @@ jobs:
           repository: canonical/chisel-releases-data
           path: actions/chisel-releases-data
           token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
-          sparse-checkout: action.yml
+          sparse-checkout: download/action.yaml
           sparse-checkout-cone-mode: false
 
       - name: Debug ls
@@ -60,7 +60,7 @@ jobs:
           sudo apt-get install --reinstall --yes distro-info distro-info-data
 
       - name: Download latest index.db.br
-        uses: ./actions/chisel-releases-data
+        uses: ./actions/chisel-releases-data/download
         with:
           artifact_name: index.db.br
           output_path: ./data_scraper
