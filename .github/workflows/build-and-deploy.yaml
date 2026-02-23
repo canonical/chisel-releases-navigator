@@ -19,9 +19,23 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
     steps:
       - name: Checkout Dashboard Repository
         uses: actions/checkout@v6
+
+      # https://github.com/actions/checkout/tree/v6/?tab=readme-ov-file#fetch-only-a-single-file
+      - name: Checkout the chisel-releases-data action
+        uses: actions/checkout@v6
+        with:
+          repository: canonical/chisel-releases-data
+          ref: v1.1
+          path: actions/chisel-releases-data
+          token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
+          sparse-checkout: download/action.yaml
+          sparse-checkout-cone-mode: false
 
       # TODO: reenable caching of the image
 
@@ -35,10 +49,17 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       
-      - name: Install distro-info
-        run: |
-          sudo apt-get update
-          sudo apt-get install --reinstall --yes distro-info distro-info-data
+      # - name: Install distro-info
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install --reinstall --yes distro-info distro-info-data
+
+      - name: Download latest index.db.br
+        uses: ./actions/chisel-releases-data/download
+        with:
+          artifact_name: index.db.br
+          output_path: ./data
+          token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
 
       - name: Build Dashboard
         # env:
