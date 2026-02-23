@@ -46,7 +46,6 @@ dashboard/dist: data/index.db.br
 
 .PHONY: clean
 clean:  ## Clean up generated files
-	rm -f data/index.db.br
 	rm -rf dashboard/dist
 	rm -f dev-image.tar
 	docker rmi -f $(IMAGE) || true
