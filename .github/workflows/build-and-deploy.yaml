@@ -37,12 +37,6 @@ jobs:
           sparse-checkout: download/action.yaml
           sparse-checkout-cone-mode: false
 
-      - name: Debug ls
-        run: |
-          ls -la
-          ls -la actions
-          ls -la actions/chisel-releases-data
-
       # TODO: reenable caching of the image
 
       # - name: Restore The Dev Image
@@ -66,9 +60,6 @@ jobs:
           artifact_name: index.db.br
           output_path: ./data_scraper
           token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
-
-      - name: Verify index.db.br download
-        run: ls -la ./data_scraper/index.db.br
 
       - name: Build Dashboard
         # env:
