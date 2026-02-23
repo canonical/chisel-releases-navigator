@@ -54,17 +54,19 @@ jobs:
       #     sudo apt-get update
       #     sudo apt-get install --reinstall --yes distro-info distro-info-data
 
-      - name: Download latest index.db.br
+      - name: Download latest chisel-releases-data
         uses: ./actions/chisel-releases-data/download
         with:
-          artifact_name: index.db.br
+          artifact_names: chisel-releases-data
           output_path: ./data
-          token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}
+          token: ${{ secrets.CHISEL_RELEASES_DATA_TOKEN }}      
 
       - name: Build Dashboard
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make build-dist
+        run: |
+          mv data/*.db.br data/index.db.br  # rename the downloaded artifact to the expected name 
+          make build-dist
       
       # - name: Cache The Dev Image
       #   if: steps.cache.outputs.cache-hit != 'true'
