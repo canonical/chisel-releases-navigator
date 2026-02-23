@@ -3,3 +3,6 @@
 .db.br
 
 dev-image.tar
+
+data/*.db
+data/*.db.br
