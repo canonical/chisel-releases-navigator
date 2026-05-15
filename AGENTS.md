@@ -1,4 +1,4 @@
-# Copilot instructions
+# Agent instructions
 
 - this repo holds only the react dashboard. the sqlite index is built by a separate scraper living in `canonical/chisel-releases-data` and pulled in as a github action artifact at build time (see `.github/workflows/build-and-deploy.yaml`).
 - the dashboard
