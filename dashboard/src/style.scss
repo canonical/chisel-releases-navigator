@@ -19,21 +19,11 @@
 @include vf-p-list-placeholders;
 @include vf-p-list;
 @include vf-p-list-divided;
-@include vf-p-list-item-state;
 @include vf-p-inline-list;
 @include vf-p-inline-list-middot;
 @include vf-p-inline-list-stretch;
 //navbar
 @include vf-p-navigation;
-//tables
-// @include vf-p-table-expanding;
-
-//nested list
-@include vf-p-list-tree;
-
-//additional icons
-@include vf-p-icon-topic;
-@include vf-p-icon-containers;
 
 
 
