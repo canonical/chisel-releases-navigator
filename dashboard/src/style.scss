@@ -1,5 +1,12 @@
 // TODO: break this up into smaller files per component
 
+// We deliberately do NOT `@include vanilla;` -- that mixin pulls the
+// entire vanilla-framework css (~400 KiB extra after minification).
+// Instead, list the specific patterns / utilities the app actually uses.
+//
+// Tradeoff: any template that uses a .p-* or .u-* class not listed here
+// will silently lack its styles. When that happens, add the matching
+// vf-* mixin below rather than re-enabling the umbrella @include.
 @import 'vanilla-framework';
 @include vf-base;
 @include vf-p-grid;
