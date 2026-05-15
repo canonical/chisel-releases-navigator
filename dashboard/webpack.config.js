@@ -41,7 +41,23 @@ module.exports = (env, argv) => {
             },
             {
                 test: /\.scss$/,
-                use: ["style-loader", "css-loader", "sass-loader"],
+                use: [
+                    "style-loader",
+                    "css-loader",
+                    {
+                        loader: "sass-loader",
+                        options: {
+                            sassOptions: {
+                                silenceDeprecations: [
+                                    "import",
+                                    "global-builtin",
+                                    "legacy-js-api",
+                                    "if-function",
+                                ],
+                            },
+                        },
+                    },
+                ],
             },
         ],
     },
