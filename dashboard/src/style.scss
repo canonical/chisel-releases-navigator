@@ -15,6 +15,15 @@
 @include vf-p-search-box;
 @include vf-p-search-and-filter;
 @include vf-u-off-screen;
+// utility helpers used in app markup
+@include vf-u-align;
+@include vf-u-align--text;
+@include vf-u-animations;
+@include vf-u-hide;
+@include vf-u-margin-collapse;
+@include vf-u-no-max-width;
+@include vf-u-padding-collapse;
+@include vf-u-text-muted;
 // lists
 @include vf-p-list-placeholders;
 @include vf-p-list;
