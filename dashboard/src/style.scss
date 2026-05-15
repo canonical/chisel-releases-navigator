@@ -434,6 +434,12 @@ a {
   filter: brightness(1.05);
 }
 
+.theme-toggle svg {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+}
+
 .package-cell__text {
   height: 1.5em;
   overflow: hidden;
