@@ -504,7 +504,7 @@ const SliceTableViewer = ({
                         </button>
                     </div>
 
-                    <div className="row">
+                    <div className="row stats-row">
                         <div className="u-text--muted u-align-text--center">
                             Found {resultsStats.packages} packages ({resultsStats.count} results) in {Math.round(resultsStats.timer)} milliseconds
                         </div>
