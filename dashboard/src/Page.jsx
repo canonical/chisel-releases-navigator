@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Navigation, List, Row, Strip } from '@canonical/react-components';
+import Navigation from '@canonical/react-components/dist/components/Navigation';
+import List from '@canonical/react-components/dist/components/List';
+import Row from '@canonical/react-components/dist/components/Row';
+import Strip from '@canonical/react-components/dist/components/Strip';
 import { PromoTab } from './components/PromoTab';
 
 // TODO: split this into a separate files per component
