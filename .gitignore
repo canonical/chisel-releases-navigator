@@ -6,3 +6,7 @@ dev-image.tar
 
 data/*.db
 data/*.db.br
+dashboard/*.db.br
+
+# local mcp server config
+.mcp.json

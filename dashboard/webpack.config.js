@@ -2,10 +2,13 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
 
 module.exports = (env, argv) => {
     const isProd = argv.mode === "production";
+    const cssLoader = isProd ? MiniCssExtractPlugin.loader : "style-loader";
     return {
     mode: isProd ? "production" : "development",
     entry: {
@@ -14,7 +17,14 @@ module.exports = (env, argv) => {
     optimization: isProd
         ? {
               minimize: true,
-              minimizer: [new TerserPlugin()],
+              minimizer: [
+                  new TerserPlugin(),
+                  new CssMinimizerPlugin({
+                      minimizerOptions: {
+                          preset: ["default", { svgo: false }],
+                      },
+                  }),
+              ],
           }
         : undefined,
 
@@ -37,11 +47,27 @@ module.exports = (env, argv) => {
             },
             {
                 test: /\.css$/i,
-                use: ['style-loader', 'css-loader'],
+                use: [cssLoader, 'css-loader'],
             },
             {
                 test: /\.scss$/,
-                use: ["style-loader", "css-loader", "sass-loader"],
+                use: [
+                    cssLoader,
+                    "css-loader",
+                    {
+                        loader: "sass-loader",
+                        options: {
+                            sassOptions: {
+                                silenceDeprecations: [
+                                    "import",
+                                    "global-builtin",
+                                    "legacy-js-api",
+                                    "if-function",
+                                ],
+                            },
+                        },
+                    },
+                ],
             },
         ],
     },
@@ -54,6 +80,7 @@ module.exports = (env, argv) => {
         }
     },
     plugins: [
+        ...(isProd ? [new MiniCssExtractPlugin({ filename: "[name].css" })] : []),
         new HtmlWebpackPlugin({
             template: "./public/base.html",
             filename: "index.html",

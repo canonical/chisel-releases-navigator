@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useReducer } from "react";
 import initSqlJs from 'sql.js';
-import { ContextualMenu, SearchAndFilter, Tabs, Button, Tooltip } from '@canonical/react-components';
+import ContextualMenu from '@canonical/react-components/dist/components/ContextualMenu';
+import SearchAndFilter from '@canonical/react-components/dist/components/SearchAndFilter';
+import Tabs from '@canonical/react-components/dist/components/Tabs';
+import Tooltip from '@canonical/react-components/dist/components/Tooltip';
 var decompress = require('brotli/decompress');
 
 
@@ -501,7 +504,7 @@ const SliceTableViewer = ({
                         </button>
                     </div>
 
-                    <div className="row">
+                    <div className="row stats-row">
                         <div className="u-text--muted u-align-text--center">
                             Found {resultsStats.packages} packages ({resultsStats.count} results) in {Math.round(resultsStats.timer)} milliseconds
                         </div>

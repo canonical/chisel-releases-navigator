@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { List } from '@canonical/react-components';
+import List from '@canonical/react-components/dist/components/List';
 import React from "react";
 
 

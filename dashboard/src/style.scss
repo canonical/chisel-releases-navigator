@@ -1,7 +1,13 @@
 // TODO: break this up into smaller files per component
 
+// We deliberately do NOT `@include vanilla;` -- that mixin pulls the
+// entire vanilla-framework css (~400 KiB extra after minification).
+// Instead, list the specific patterns / utilities the app actually uses.
+//
+// Tradeoff: any template that uses a .p-* or .u-* class not listed here
+// will silently lack its styles. When that happens, add the matching
+// vf-* mixin below rather than re-enabling the umbrella @include.
 @import 'vanilla-framework';
-@include vanilla;
 @include vf-base;
 @include vf-p-grid;
 // categories
@@ -16,25 +22,24 @@
 @include vf-p-search-box;
 @include vf-p-search-and-filter;
 @include vf-u-off-screen;
+// utility helpers used in app markup
+@include vf-u-align;
+@include vf-u-align--text;
+@include vf-u-animations;
+@include vf-u-hide;
+@include vf-u-margin-collapse;
+@include vf-u-no-max-width;
+@include vf-u-padding-collapse;
+@include vf-u-text-muted;
 // lists
 @include vf-p-list-placeholders;
 @include vf-p-list;
 @include vf-p-list-divided;
-@include vf-p-list-item-state;
 @include vf-p-inline-list;
 @include vf-p-inline-list-middot;
 @include vf-p-inline-list-stretch;
 //navbar
 @include vf-p-navigation;
-//tables
-// @include vf-p-table-expanding;
-
-//nested list
-@include vf-p-list-tree;
-
-//additional icons
-@include vf-p-icon-topic;
-@include vf-p-icon-containers;
 
 
 
@@ -398,6 +403,12 @@ a {
   margin-top: 1rem;
 }
 
+.stats-row {
+  margin-top: 1rem;
+  padding: 1rem 0;
+  background-color: var(--app-bg);
+}
+
 .package-header {
   width: 100%;
   height: 100%;
@@ -433,6 +444,12 @@ a {
 
 .theme-toggle:hover {
   filter: brightness(1.05);
+}
+
+.theme-toggle svg {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
 }
 
 .package-cell__text {
