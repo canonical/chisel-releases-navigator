@@ -1,4 +1,4 @@
-FROM ubuntu:noble
+FROM ubuntu:26.04
 
 RUN apt update && apt install --yes --no-install-recommends npm && \
     apt clean && rm -rf /var/lib/apt/lists/*
@@ -11,7 +11,7 @@ RUN chown --recursive ubuntu:ubuntu /dashboard
 COPY ./dashboard/package.json package.json
 COPY ./dashboard/yarn.lock yarn.lock
 
-RUN yarn install --frozen-lockfile --ignore-engines
+RUN yarn install --frozen-lockfile
 
 # Copy the rest of the dashboard files after installing dependencies to leverage Docker caching
 COPY ./dashboard /dashboard
