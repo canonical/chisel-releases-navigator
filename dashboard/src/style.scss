@@ -54,6 +54,7 @@
   --slice-ok: #B1D4B8;
   --slice-notes: #AEC3E5;
   --slice-missing: #FAD54C;
+  --slice-partial: #F3C9A3;
   --row-height: 1.6rem;
   --header-height: 6.0rem;
   --package-col-width: clamp(10rem, 24vw, 20rem);
@@ -72,6 +73,7 @@
   --slice-ok: #387544;
   --slice-notes: #325285;
   --slice-missing: #b58a1f;
+  --slice-partial: #9a5b2a;
 }
 
 [data-theme="dark"] .p-tabs__link,
@@ -260,6 +262,10 @@ a {
 
 .slice-cell--missing {
   background-color: var(--slice-missing);
+}
+
+.slice-cell--partial {
+  background-color: var(--slice-partial);
 }
 
 .slice-cell--link {

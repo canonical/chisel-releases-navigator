@@ -38,6 +38,7 @@ const searchColumns = {
     "package": { column: "slice.package" },
     "notes": { column: "slice.notes" },
     "version": { column: "slice.version" },
+    "arches": { column: "slice.arches", parser: value => JSON.parse(value || "{}") },
 };
 
 const searchLogic = (row, keywordArray, groupedData) => {
@@ -55,7 +56,11 @@ const searchLogic = (row, keywordArray, groupedData) => {
         filter => (filter === "missing" ? row.version === null || row.version === undefined : row.version === filter)
     ) : true;
 
-    return keywordFound && branchFound && notesFound && versionFound;
+    const archFound = groupedData.arch ? groupedData.arch.some(
+        filter => (filter.startsWith("!") ? !(filter.slice(1) in row.arches) : filter in row.arches)
+    ) : true;
+
+    return keywordFound && branchFound && notesFound && versionFound && archFound;
 
 };
 

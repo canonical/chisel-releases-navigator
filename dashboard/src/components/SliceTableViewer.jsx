@@ -96,6 +96,9 @@ const SliceTableViewer = ({
         const fullVersion = slice ? normalizeVersion(slice.version) : "";
         const label = slice ? (hasVersion ? shortenVersionForLabel(fullVersion) : "!") : "";
         const notes = slice ? slice.notes : [];
+        const arches = slice ? Object.keys(slice.arches || {}) : [];
+        // published somewhere, but not on amd64: the scalar columns come from another arch
+        const partial = hasVersion && !arches.includes("amd64");
         const component = slice?.component || "";
         const repo = slice?.repo ? `, ${slice.repo}` : "";
         const section = slice?.section || "";
@@ -105,6 +108,9 @@ const SliceTableViewer = ({
             `${component}/${section}${repo}`,
             `${fullVersion}`,
         ] : [];
+        if (arches.length) {
+            tooltipParts.push(`arches: ${arches.join(", ")}`);
+        }
         if (description) {
             tooltipParts.push("", description);
         }
@@ -116,6 +122,8 @@ const SliceTableViewer = ({
         if (slice) {
             if (!hasVersion) {
                 cellClass += " slice-cell--missing";
+            } else if (partial) {
+                cellClass += " slice-cell--partial";
             } else if (slice.notes.length) {
                 cellClass += " slice-cell--notes";
             } else {
@@ -178,7 +186,7 @@ const SliceTableViewer = ({
 
 
 
-    const select = "slice.package, slice.branch, slice.definition, slice.notes, slice.version, description.description, slice.component, slice.repo, slice.section";
+    const select = "slice.package, slice.branch, slice.definition, slice.notes, slice.version, description.description, slice.component, slice.repo, slice.section, slice.arches";
 
     const initResult = queryResult => {
 
@@ -203,8 +211,9 @@ const SliceTableViewer = ({
                               component: row[6],
                               repo: row[7],
                               section: row[8],
+                              arches: JSON.parse(row[9] || "{}"),
                           }
-                        : null; // Return object with columns 2-8
+                        : null; // Return object with columns 2-9
                 } catch (e) {
                     return null;
                 }
@@ -271,17 +280,26 @@ const SliceTableViewer = ({
             ${order}
             `;
 
-    const buildFilterPanelData = (branches) => {
+    const buildFilterPanelData = (branches, arches) => {
         const branchPanel = {
             chips: branches.map(branch => ({ lead: "branch", value: branch })),
             heading: "Branch",
             id: 0,
         };
+        // "arch: amd64" keeps packages published on amd64, "arch: !amd64" those not
+        const archPanel = {
+            chips: [
+                ...arches.map(arch => ({ lead: "arch", value: arch })),
+                ...arches.map(arch => ({ lead: "arch", value: `!${arch}` })),
+            ],
+            heading: "Architecture",
+            id: 1,
+        };
         const restPanels = filterPanelData.map((panel, index) => ({
             ...panel,
-            id: index + 1,
+            id: index + 2,
         }));
-        return [branchPanel, ...restPanels];
+        return [branchPanel, archPanel, ...restPanels];
     };
 
     const buildCategories = (releases) => {
@@ -349,7 +367,13 @@ const SliceTableViewer = ({
 
         [branchesResult, _] = db.exec("SELECT DISTINCT branch FROM slice ORDER BY branch DESC");
         const branches = branchesResult?.values?.map(row => row[0]) ?? [];
-        setFilterPanelDataState(buildFilterPanelData(branches));
+        let scannedArches = [];
+        try {
+            scannedArches = JSON.parse(meta.scanned_arches ?? "[]");
+        } catch (e) {
+            scannedArches = [];
+        }
+        setFilterPanelDataState(buildFilterPanelData(branches, scannedArches));
 
         [releasesResult, _] = db.exec(
             "SELECT branch, lts, supported, devel FROM release WHERE branch IS NOT NULL"
