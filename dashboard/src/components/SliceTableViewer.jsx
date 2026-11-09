@@ -26,7 +26,7 @@ const NoResultsState = () => (<>
         </div>
         <div className="u-align--left col-9">
             <p className="p-heading--4 u-no-padding--top">No Slices Found</p>
-            <p>Your search did not match any slice definition. Try adjusting your keywords or
+            <p>Your search did not match any slice. Try adjusting your keywords or
                 loosening search requirements.</p>
         </div>
     </div>
@@ -365,7 +365,7 @@ const SliceTableViewer = ({
         setDbStats({
             "Updated": date.toLocaleString("en-GB"),
             "Packages": packageCount,
-            "Slice Definition Files": sliceCount,
+            "Slices": sliceCount,
             "Ubuntu Releases": releaseCount
         });
     }
