@@ -1,6 +1,6 @@
 # chisel-releases-navigator
 
-A tool to easily navigate through the different [chisel-releases](https://github.com/canonical/chisel-releases), and what slice definitions are available in each.
+A tool to easily navigate through the different [chisel-releases](https://github.com/canonical/chisel-releases), and what slices are available in each.
 
 Published at https://canonical.github.io/chisel-releases-navigator/
 

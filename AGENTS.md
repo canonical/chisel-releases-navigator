@@ -7,7 +7,7 @@
     - loads the Brotli-compressed `index.db.br` shipped alongside the bundle
 - the upstream scraper (separate repo, not in this tree)
     - clones canonical/chisel-releases
-    - parses slice definition files (SDFs)
+    - parses package slices files
     - writes a sqlite db
     - Brotli-compresses it as `index.db.br` and publishes it as an artifact named `chisel-releases-data`
     - uses uv to manage virtual environments and dependencies
